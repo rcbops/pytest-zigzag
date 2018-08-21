@@ -1,0 +1,14 @@
+-c constraints.txt
+tox
+flake8
+python-dateutil
+pytest
+pytest-cov
+pytest-mock
+lxml
+setuptools
+ipython
+bumpversion
+twine
+sh
+testinfra

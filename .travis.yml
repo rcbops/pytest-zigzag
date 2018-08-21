@@ -1,0 +1,18 @@
+
+language: python
+python:
+ - "2.7"
+ - "3.5"
+ - "3.6"
+
+install:
+ - pip install tox-travis
+script: tox
+
+stages:
+  - test
+
+jobs:
+  include:
+  - python: 3.6
+    env: TOXENV=flake8
