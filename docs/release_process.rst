@@ -12,16 +12,18 @@ The easiest way to release a new version of pytest-zigzag is to use make.
 
 4. Use the `release-major`, `release-minor`, or `release-patch`.
 
-**make release** ::
+  **make release** ::
 
-make release-minor
+    make release-minor
+
 5. The task will stop and prompt you for you PyPI username and password if you dont have these set in your `.pypirc` file.
 
 6. Once the task has successfully completed you need to push the tag and commit.
 
-**push tag** ::
+  **push tag** ::
 
-git push origin && git push origin refs/tags/<tagname>
+    git push origin && git push origin refs/tags/<tagname>
+
 7. Create a release on GitHub. GitHub_release_
 
 .. _semver: https://semver.org
