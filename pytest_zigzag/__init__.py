@@ -14,6 +14,7 @@ from datetime import datetime
 # ======================================================================================================================
 # Globals
 # ======================================================================================================================
+TEST_STEPS_MARK = 'test_case_with_steps'
 ASC_ENV_VARS = ['BUILD_URL',
                 'BUILD_NUMBER',
                 'RE_JOB_ACTION',
@@ -74,11 +75,11 @@ def _capture_marks(items, marks):
     """
 
     for item in items:
-        for mark in marks:
-            marker = item.get_marker(mark)
-            if marker is not None:
-                for arg in marker.args:
-                    item.user_properties.append((mark, arg))
+        # If item is in a class then check to see if this item is a test step or test case.
+        item.user_properties.append(('test_step', 'true' if item.get_marker(TEST_STEPS_MARK) else 'false'))
+        for marker in [item.get_marker(mark) for mark in marks if item.get_marker(mark)]:
+            for arg in marker.args:
+                item.user_properties.append((marker.name, arg))
 
 
 def _get_ci_environment(session):
@@ -91,6 +92,7 @@ def _get_ci_environment(session):
     Returns:
         str: The value of the config with the highest precedence
     """
+
     #  Try to get configs from CLI and ini
     try:
         cli_option = session.config.getoption('--ci-environment')
@@ -112,7 +114,7 @@ def _get_ci_environment(session):
 
 
 # ======================================================================================================================
-# Functions: Public
+# Hooks
 # ======================================================================================================================
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtestloop(session):
@@ -148,13 +150,20 @@ def pytest_collection_modifyitems(items):
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
-    """Add XML properties group to the 'testcase' element that captures start time in UTC.
+    """Add XML properties group to the 'testcase' element that captures start time in UTC. Also, skip test cases
+    in a class where the previous test case failed.
 
     Args:
         item (_pytest.nodes.Item): An item object.
     """
+
     now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     item.user_properties.append(('start_time', now))
+
+    if "test_case_with_steps" in item.keywords and ('teardown' not in item.name or 'setup' not in item.name):
+        previousfailed = getattr(item.parent, "_previousfailed", None)
+        if previousfailed is not None:
+            pytest.skip("because previous test failed: {}".format(previousfailed.name))
 
 
 @pytest.hookimpl(trylast=True)
@@ -164,6 +173,7 @@ def pytest_runtest_teardown(item):
     Args:
         item (_pytest.nodes.Item): An item object.
     """
+
     now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     item.user_properties.append(('end_time', now))
 
@@ -174,12 +184,30 @@ def pytest_addoption(parser):
     Args:
         parser (_pytest.config.Parser): A parser object
     """
+
     config_option = "ci-environment"
     config_option_help = "The ci-environment used to execute the tests, (default: 'asc')"
     parser.addini(config_option, config_option_help)
     parser.addoption("--{}".format(config_option), help=config_option_help)
 
 
+def pytest_runtest_makereport(item, call):
+    """Re-write the report concerning test cases with steps so it looks correct.
+
+    Args:
+        item (_pytest.nodes.Item): An item object.
+        call (_pytest.runner.CallInfo): A call info object.
+    """
+
+    if "test_case_with_steps" in item.keywords:
+        if call.excinfo is not None:
+            parent = item.parent
+            parent._previousfailed = item
+
+
+# ======================================================================================================================
+# Functions: Public
+# ======================================================================================================================
 def get_xsd(ci_environment='asc'):
     """Retrieve a XSD for validating JUnitXML results produced by this plug-in.
 

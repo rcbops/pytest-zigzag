@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # ======================================================================================================================
 # Imports
 # ======================================================================================================================
@@ -100,7 +101,7 @@ def is_sub_dict(small, big):
     return dict(big, **small) == big
 
 
-def run_and_parse(testdir, exit_code_exp=0, runpytest_args=list()):
+def run_and_parse(testdir, exit_code_exp=0, runpytest_args=None):
     """Execute a pytest run against a directory containing pytest Python files.
 
     Args:
@@ -113,6 +114,7 @@ def run_and_parse(testdir, exit_code_exp=0, runpytest_args=list()):
         JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.
     """
 
+    runpytest_args = [] if not runpytest_args else runpytest_args
     result_path = testdir.tmpdir.join('junit.xml')
     result = testdir.runpytest("--junitxml={}".format(result_path), *runpytest_args)
 
@@ -123,12 +125,12 @@ def run_and_parse(testdir, exit_code_exp=0, runpytest_args=list()):
     return junit_xml_doc
 
 
-def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=list()):
+def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=None):
     """Execute a pytest run against a directory containing pytest Python files.
 
     Args:
         testdir (_pytest.pytester.TestDir): A pytest fixture for testing pytest plug-ins.
-        config (str): THe contents of the config that you want to use.
+        config (str): The contents of the config that you want to use.
         exit_code_exp (int): The expected exit code for pytest run. (Default = 0)
         runpytest_args (list(object)): A list of positional arguments to pass into the "testdir" fixture.
             (Default = [])
@@ -137,6 +139,7 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=l
         JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.
     """
 
+    runpytest_args = [] if not runpytest_args else runpytest_args
     result_path = testdir.tmpdir.join('junit.xml')
     config_path = testdir.tmpdir.join('conf.conf')
     with open(str(config_path), 'w') as f:
@@ -149,6 +152,23 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=l
     junit_xml_doc = JunitXml(str(result_path))
 
     return junit_xml_doc
+
+
+def merge_dicts(*args):
+    """Given any number of dicts, shallow copy and merge into a new dict, precedence goes to key value pairs in latter
+    dicts.
+
+    Args:
+        *args (list(dict)): A list of dictionaries to be merged.
+
+    Returns:
+        dict: A merged dictionary.
+    """
+
+    result = {}
+    for dictionary in args:
+        result.update(dictionary)
+    return result
 
 
 # ======================================================================================================================
@@ -180,7 +200,7 @@ def undecorated_test_function():
 
 @pytest.fixture(scope='session')
 def single_decorated_test_function():
-    """An Python function decorated with a single pytest mark with the following named formatters:
+    """A Python function decorated with a single pytest mark with the following named formatters:
 
         test_name: Name of decorated function.
         mark_type: The name of the pytest mark.
@@ -200,7 +220,7 @@ def single_decorated_test_function():
 
 @pytest.fixture(scope='session')
 def properly_decorated_test_function():
-    """An Python function decorated with the required 'test_id' and 'jira' marks along with the following named
+    """A Python function decorated with the required 'test_id' and 'jira' marks along with the following named
     formatters:
 
         test_name: Name of decorated function.
@@ -221,8 +241,133 @@ def properly_decorated_test_function():
 
 
 @pytest.fixture(scope='session')
+def properly_decorated_test_method():
+    """A Python method decorated with the required 'test_id' and 'jira' marks without the class being decorated with the
+    'test_case_with_steps' mark.
+
+    Named formatters:
+
+        test_name: Name of decorated function.
+        test_id: The desired 'test_id' mark argument.
+        jira_id: The desired 'jira' mark argument.
+    """
+
+    py_file = \
+        """
+        import pytest
+        class TestClass(object):
+            @pytest.mark.test_id('{test_id}')
+            @pytest.mark.jira('{jira_id}')
+            def {test_name}(self):
+                pass
+        """
+
+    return py_file
+
+
+@pytest.fixture(scope='session')
+def improperly_decorated_test_method():
+    """A Python method decorated with the required 'test_id' and 'jira' marks without the class being decorated with the
+    'test_case_with_steps' mark, but with 'test_id' and 'jira' marks on the class.
+
+    Named formatters:
+
+        test_name: Name of decorated method.
+        test_id: The desired 'test_id' mark argument.
+        jira_id: The desired 'jira' mark argument.
+    """
+
+    py_file = \
+        """
+        import pytest
+        @pytest.mark.test_id('{test_id}')
+        @pytest.mark.jira('{jira_id}')
+        class TestClass(object):
+            @pytest.mark.test_id('Uhh oh!')
+            @pytest.mark.jira('BAD-123')
+            def {test_name}(self):
+                pass
+        """
+
+    return py_file
+
+
+@pytest.fixture(scope='session')
+def properly_decorated_test_class_with_steps():
+    """A Python class decorated with the 'test_case_with_steps' mark which designates it as a test case with steps. The
+    class is also decorate with the required 'test_id', 'jira' marks.
+
+    Named formatters:
+
+        test_name: Name of decorated class. (Test case name)
+        test_step_one: Name of the first decorated function within the class.
+        test_step_two: Name of the second decorated function within the class.
+        test_step_three: Name of the third decorated function within the class.
+        test_id: The desired 'test_id' mark argument.
+        jira_id: The desired 'jira' mark argument.
+    """
+
+    py_file = \
+        """
+        import pytest
+        @pytest.mark.test_id('{test_id}')
+        @pytest.mark.jira('{jira_id}')
+        @pytest.mark.test_case_with_steps
+        class {test_name}(object):
+            def {test_step_one}(self):
+                pass
+            def {test_step_two}(self):
+                pass
+            def {test_step_three}(self):
+                pass
+        """
+
+    return py_file
+
+
+@pytest.fixture(scope='session')
+def improperly_decorated_test_class_with_steps():
+    """A Python class decorated with the 'test_case_with_steps' mark which designates it as a test case with steps. The
+    class is also decorate with the required 'test_id', 'jira' marks. Each method is also decorated with the 'test_id',
+    'jira' marks which will be ignored.
+
+    Named formatters:
+
+        test_name: Name of decorated class. (Test case name)
+        test_step_one: Name of the first decorated function within the class.
+        test_step_two: Name of the second decorated function within the class.
+        test_step_three: Name of the third decorated function within the class.
+        test_id: The desired 'test_id' mark argument.
+        jira_id: The desired 'jira' mark argument.
+    """
+
+    py_file = \
+        """
+        import pytest
+        @pytest.mark.test_id('{test_id}')
+        @pytest.mark.jira('{jira_id}')
+        @pytest.mark.test_case_with_steps
+        class {test_name}(object):
+            @pytest.mark.test_id('test_step_one_test_id')
+            @pytest.mark.jira('test_step_one_jira_id')
+            def {test_step_one}(self):
+                pass
+            @pytest.mark.test_id('test_step_two_test_id')
+            @pytest.mark.jira('test_step_two_jira_id')
+            def {test_step_two}(self):
+                pass
+            @pytest.mark.test_id('test_step_three_test_id')
+            @pytest.mark.jira('test_step_three_jira_id')
+            def {test_step_three}(self):
+                pass
+        """
+
+    return py_file
+
+
+@pytest.fixture(scope='session')
 def sleepy_test_function():
-    """An Python function that sleeps for a period of time with the following named formatters:
+    """A Python function that sleeps for a period of time with the following named formatters:
 
         test_name: Name of decorated function.
         seconds: The number of seconds to sleep.
