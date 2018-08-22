@@ -12,3 +12,4 @@ bumpversion
 twine
 sh
 testinfra
+rpc-zigzag==0.13.0
