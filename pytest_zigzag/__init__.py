@@ -11,7 +11,7 @@ from datetime import datetime
 from zigzag.zigzag import ZigZag
 from pytest_zigzag.session_messages import SessionMessages
 
-__version__ = '0.0.0'
+__version__ = '0.1.0'
 
 # ======================================================================================================================
 # Globals
