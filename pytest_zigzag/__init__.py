@@ -64,6 +64,7 @@ MK8S_ENV_VARS = ['BUILD_URL',
                  'NODE_NAME',
                  'PWD',
                  'STAGE_NAME']
+ZZ_WARN_MESSAGE = "ZigZag will not attempt upload, '--zigzag' and '--qtest-project-id' must be specified together."
 
 
 # ======================================================================================================================
@@ -97,21 +98,20 @@ def _get_ci_environment(session):
     """
 
     # Determine if the option passed with the highest precedence is a valid option
-    highest_precedence = _get_option_of_highest_precedence(session, 'ci-environment') or 'asc'
+    highest_precedence = _get_option_of_highest_precedence(session.config, 'ci-environment') or 'asc'
     white_list = ['asc', 'mk8s']
     if not any(x == highest_precedence for x in white_list):
         raise RuntimeError(
             "The value {} is not a valid value for the 'ci-environment' configuration".format(highest_precedence))
-
     return highest_precedence
 
 
-def _get_option_of_highest_precedence(session, option_name):
-    """looks in the session and returns the option of the highest precedence
+def _get_option_of_highest_precedence(config, option_name):
+    """looks in the config and returns the option of the highest precedence
     This assumes that there are options and flags that are equivalent
 
     Args:
-        session (_pytest.main.Session): The pytest session object
+        config (_pytest.config.Config): The pytest config object
         option_name (str): The name of the option
 
     Returns:
@@ -120,11 +120,11 @@ def _get_option_of_highest_precedence(session, option_name):
     """
     #  Try to get configs from CLI and ini
     try:
-        cli_option = session.config.getoption("--{}".format(option_name))
+        cli_option = config.getoption("--{}".format(option_name))
     except ValueError:
         cli_option = None
     try:
-        ini_option = session.config.getini(option_name)
+        ini_option = config.getini(option_name)
     except ValueError:
         ini_option = None
     highest_precedence = cli_option or ini_option
@@ -144,13 +144,11 @@ def pytest_sessionfinish(session):
     """
     SESSION_MESSAGES.drain()  # need to reset this on every pass through this hook
     if session.config.pluginmanager.hasplugin('junitxml'):
-        zz_option = _get_option_of_highest_precedence(session, 'zigzag')
-        if zz_option:
-            qtest_project_id = _get_option_of_highest_precedence(session, 'qtest-project-id')
+        zz_option = _get_option_of_highest_precedence(session.config, 'zigzag')
+        qtest_project_id = _get_option_of_highest_precedence(session.config, 'qtest-project-id')
+        if zz_option and qtest_project_id:
             try:
                 junit_file_path = getattr(session.config, '_xml', None).logfile
-                if not qtest_project_id:
-                    raise RuntimeError("'qtest-project-id' is required when using ZigZag")
                 zz = ZigZag(junit_file_path, os.environ['QTEST_API_TOKEN'], qtest_project_id, None)
                 job_id = zz.upload_test_results()
                 SESSION_MESSAGES.append("ZigZag upload was successful!")
@@ -249,6 +247,24 @@ def pytest_addoption(parser):
     project_help = 'The target project ID to use as a destination for test results published by ZigZag'
     parser.addini('qtest-project-id', project_help, default=None)
     parser.addoption('--qtest-project-id', help=project_help, default=None)
+
+
+def pytest_configure(config):
+    """
+    Allows plugins and conftest files to perform initial configuration.
+
+    This hook is called for every plugin and initial conftest file after command line options have been parsed.
+
+    After that, the hook is called for other conftest files as they are imported.
+
+    Args:
+        config (_pytest.config.Config) a config object
+    """
+    zz = _get_option_of_highest_precedence(config, 'zigzag')
+    qtpid = _get_option_of_highest_precedence(config, 'qtest-project-id')
+
+    if any([zz, qtpid]) and not all([zz, qtpid]):
+        config.warn(101, ZZ_WARN_MESSAGE)
 
 
 def pytest_runtest_makereport(item, call):
