@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
+from pytest_zigzag import ZZ_WARN_MESSAGE
+
 # ======================================================================================================================
 # Tests
 # ======================================================================================================================
@@ -88,8 +90,7 @@ def test_zigzag_no_project_id(testdir, single_decorated_test_function, mocker):
         "--zigzag")
 
     # Test
-    assert 'The ZigZag upload was not successful' in result.outlines
-    assert "'qtest-project-id' is required when using ZigZag" in result.outlines
+    assert any([line.strip() == ZZ_WARN_MESSAGE for line in result.outlines])
 
 
 def test_no_zigzag(testdir, single_decorated_test_function, mocker):
@@ -115,5 +116,4 @@ def test_no_zigzag(testdir, single_decorated_test_function, mocker):
         "--qtest-project-id={}".format(project_id))
 
     # Test
-    for line in result.outlines:
-        assert 'ZigZag' not in line
+    assert any([line.strip() == ZZ_WARN_MESSAGE for line in result.outlines])
