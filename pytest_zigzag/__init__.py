@@ -209,7 +209,7 @@ def pytest_runtest_setup(item):
     now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     item.user_properties.append(('start_time', now))
 
-    if "test_case_with_steps" in item.keywords and ('teardown' not in item.name or 'setup' not in item.name):
+    if "test_case_with_steps" in item.keywords and 'setup' not in item.name and 'teardown' not in item.name:
         previousfailed = getattr(item.parent, "_previousfailed", None)
         if previousfailed is not None:
             pytest.skip("because previous test failed: {}".format(previousfailed.name))

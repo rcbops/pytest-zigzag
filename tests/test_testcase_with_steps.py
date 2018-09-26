@@ -6,7 +6,7 @@
 # Imports
 # ======================================================================================================================
 from __future__ import absolute_import
-from tests.conftest import run_and_parse, merge_dicts
+from tests.conftest import run_and_parse, merge_dicts, is_sub_dict
 
 
 # ======================================================================================================================
@@ -67,20 +67,20 @@ def test_class_with_steps(testdir, properly_decorated_test_class_with_steps):
     test_steps = {'test_step_one': 'test_step_one',
                   'test_step_two': 'test_step_two',
                   'test_step_three': 'test_step_three'}
-    expectations = {'test_name': 'TestCaseWithSteps',
-                    'test_id': 'test_case_class_id',
-                    'jira_id': 'ASC-123'}
+    tc_props_exps = {'test_name': 'TestCaseWithSteps',
+                     'test_id': 'test_case_class_id',
+                     'jira_id': 'ASC-123'}
 
     # Setup
-    testdir.makepyfile(properly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, expectations)))
+    testdir.makepyfile(properly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, tc_props_exps)))
 
     junit_xml = run_and_parse(testdir)
 
     # Test
     for test_step in test_steps.values():
         assert junit_xml.get_testcase_properties(test_step)['test_step'] == 'true'
-        assert junit_xml.get_testcase_properties(test_step)['test_id'] == expectations['test_id']
-        assert junit_xml.get_testcase_properties(test_step)['jira'] == expectations['jira_id']
+        assert junit_xml.get_testcase_properties(test_step)['test_id'] == tc_props_exps['test_id']
+        assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
 
 
 def test_class_with_steps_and_repeated_marks(testdir, improperly_decorated_test_class_with_steps):
@@ -96,17 +96,134 @@ def test_class_with_steps_and_repeated_marks(testdir, improperly_decorated_test_
     test_steps = {'test_step_one': 'test_step_one',
                   'test_step_two': 'test_step_two',
                   'test_step_three': 'test_step_three'}
-    expectations = {'test_name': 'TestCaseWithSteps',
-                    'test_id': 'test_case_class_id',
-                    'jira_id': 'ASC-123'}
+    tc_props_exps = {'test_name': 'TestCaseWithSteps',
+                     'test_id': 'test_case_class_id',
+                     'jira_id': 'ASC-123'}
 
     # Setup
-    testdir.makepyfile(improperly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, expectations)))
+    testdir.makepyfile(improperly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, tc_props_exps)))
 
     junit_xml = run_and_parse(testdir)
 
     # Test
     for test_step in test_steps.values():
         assert junit_xml.get_testcase_properties(test_step)['test_step'] == 'true'
-        assert junit_xml.get_testcase_properties(test_step)['test_id'] == expectations['test_id']
-        assert junit_xml.get_testcase_properties(test_step)['jira'] == expectations['jira_id']
+        assert junit_xml.get_testcase_properties(test_step)['test_id'] == tc_props_exps['test_id']
+        assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
+
+
+def test_class_with_failed_step(testdir, properly_decorated_test_class_with_step_failure):
+    """Verify that steps that follow a failing step will automatically skip."""
+
+    # Expect
+    test_steps = {'test_step_one': 'test_step_one',
+                  'test_step_two': 'test_step_fail',
+                  'test_step_three': 'test_step_skip',
+                  'test_step_four': 'test_step_skip_again'}
+    tc_props_exps = {'test_name': 'TestCaseWithSteps',
+                     'test_id': 'test_case_class_id',
+                     'jira_id': 'ASC-123'}
+    ts_attribs_exps = {'tests': '4',
+                       'errors': '0',
+                       'skips': '2',
+                       'failures': '1'}
+    # Setup
+    testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
+
+    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+
+    # Test
+    assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
+
+    for test_step in test_steps.values():
+        assert junit_xml.get_testcase_properties(test_step)['test_step'] == 'true'
+        assert junit_xml.get_testcase_properties(test_step)['test_id'] == tc_props_exps['test_id']
+        assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
+
+
+def test_class_with_setup_steps(testdir, properly_decorated_test_class_with_step_failure):
+    """Verify that steps with 'setup' in the name will always be ran regardless if previous steps failed."""
+
+    # Expect
+    test_steps = {'test_step_one': 'test_setup_one',
+                  'test_step_two': 'test_fail',
+                  'test_step_three': 'test_skip',
+                  'test_step_four': 'test_setup_two'}
+    tc_props_exps = {'test_name': 'TestCaseWithSteps',
+                     'test_id': 'test_case_class_id',
+                     'jira_id': 'ASC-123'}
+    ts_attribs_exps = {'tests': '4',
+                       'errors': '0',
+                       'skips': '1',
+                       'failures': '1'}
+    # Setup
+    testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
+
+    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+
+    # Test
+    assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
+
+    for test_step in test_steps.values():
+        assert junit_xml.get_testcase_properties(test_step)['test_step'] == 'true'
+        assert junit_xml.get_testcase_properties(test_step)['test_id'] == tc_props_exps['test_id']
+        assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
+
+
+def test_class_with_teardown_steps(testdir, properly_decorated_test_class_with_step_failure):
+    """Verify that steps with 'teardown' in the name will always be ran regardless if previous steps failed."""
+
+    # Expect
+    test_steps = {'test_step_one': 'test_teardown_one',
+                  'test_step_two': 'test_fail',
+                  'test_step_three': 'test_skip',
+                  'test_step_four': 'test_teardown_two'}
+    tc_props_exps = {'test_name': 'TestCaseWithSteps',
+                     'test_id': 'test_case_class_id',
+                     'jira_id': 'ASC-123'}
+    ts_attribs_exps = {'tests': '4',
+                       'errors': '0',
+                       'skips': '1',
+                       'failures': '1'}
+    # Setup
+    testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
+
+    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+
+    # Test
+    assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
+
+    for test_step in test_steps.values():
+        assert junit_xml.get_testcase_properties(test_step)['test_step'] == 'true'
+        assert junit_xml.get_testcase_properties(test_step)['test_id'] == tc_props_exps['test_id']
+        assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
+
+
+def test_class_with_setup_and_teardown_steps(testdir, properly_decorated_test_class_with_step_failure):
+    """Verify that steps with 'setup' or 'teardown' in the name will always be ran regardless if previous steps failed.
+    """
+
+    # Expect
+    test_steps = {'test_step_one': 'test_setup',
+                  'test_step_two': 'test_fail',
+                  'test_step_three': 'test_skip',
+                  'test_step_four': 'test_teardown'}
+    tc_props_exps = {'test_name': 'TestCaseWithSteps',
+                     'test_id': 'test_case_class_id',
+                     'jira_id': 'ASC-123'}
+    ts_attribs_exps = {'tests': '4',
+                       'errors': '0',
+                       'skips': '1',
+                       'failures': '1'}
+    # Setup
+    testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
+
+    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+
+    # Test
+    assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
+
+    for test_step in test_steps.values():
+        assert junit_xml.get_testcase_properties(test_step)['test_step'] == 'true'
+        assert junit_xml.get_testcase_properties(test_step)['test_id'] == tc_props_exps['test_id']
+        assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']

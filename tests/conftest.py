@@ -326,6 +326,42 @@ def properly_decorated_test_class_with_steps():
 
 
 @pytest.fixture(scope='session')
+def properly_decorated_test_class_with_step_failure():
+    """A Python class decorated with the 'test_case_with_steps' mark which designates it as a test case with steps. The
+    class is also decorate with the required 'test_id', 'jira' marks. The second test step will report a failure.
+
+    Named formatters:
+
+        test_name: Name of decorated class. (Test case name)
+        test_step_one: Name of the first decorated function within the class.
+        test_step_two: Name of the second decorated function within the class. (Will report failure)
+        test_step_three: Name of the third decorated function within the class.
+        test_step_four: Name of the third decorated function within the class.
+        test_id: The desired 'test_id' mark argument.
+        jira_id: The desired 'jira' mark argument.
+    """
+
+    py_file = \
+        """
+        import pytest
+        @pytest.mark.test_id('{test_id}')
+        @pytest.mark.jira('{jira_id}')
+        @pytest.mark.test_case_with_steps
+        class {test_name}(object):
+            def {test_step_one}(self):
+                pass
+            def {test_step_two}(self):
+                assert False
+            def {test_step_three}(self):
+                pass
+            def {test_step_four}(self):
+                pass
+        """
+
+    return py_file
+
+
+@pytest.fixture(scope='session')
 def improperly_decorated_test_class_with_steps():
     """A Python class decorated with the 'test_case_with_steps' mark which designates it as a test case with steps. The
     class is also decorate with the required 'test_id', 'jira' marks. Each method is also decorated with the 'test_id',
