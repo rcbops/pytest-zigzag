@@ -1,15 +1,15 @@
 -c constraints.txt
-tox
+bumpversion
 flake8
+ipython
+lxml
 python-dateutil
 pytest
 pytest-cov
 pytest-mock
-lxml
+rpc-zigzag
 setuptools
-ipython
-bumpversion
-twine
 sh
 testinfra
-rpc-zigzag==0.12.1
+tox
+twine
