@@ -70,20 +70,21 @@ ZZ_WARN_MESSAGE = "ZigZag will not attempt upload, '--zigzag' and '--qtest-proje
 # ======================================================================================================================
 # Functions: Private
 # ======================================================================================================================
-def _capture_marks(items, marks):
+def _capture_marks(items, mark_names):
     """Add XML properties group to each 'testcase' element that captures the specified marks.
 
     Args:
         items (list(_pytest.nodes.Item)): List of item objects.
-        marks (list(str)): A list of marks to capture and record in JUnitXML for each 'testcase'.
+        mark_names (list(str)): A list of marks to capture and record in JUnitXML for each 'testcase'.
     """
 
     for item in items:
         # If item is in a class then check to see if this item is a test step or test case.
-        item.user_properties.append(('test_step', 'true' if item.get_marker(TEST_STEPS_MARK) else 'false'))
-        for marker in [item.get_marker(mark) for mark in marks if item.get_marker(mark)]:
-            for arg in marker.args:
-                item.user_properties.append((marker.name, arg))
+        item.user_properties.append(('test_step', 'true' if item.get_closest_marker(TEST_STEPS_MARK) else 'false'))
+        for mark_name in mark_names:
+            for marker in item.iter_markers(mark_name):
+                for arg in marker.args:
+                    item.user_properties.append((marker.name, arg))
 
 
 def _get_ci_environment(session):
@@ -149,6 +150,7 @@ def pytest_sessionfinish(session):
         if zz_option and qtest_project_id:
             try:
                 junit_file_path = getattr(session.config, '_xml', None).logfile
+                # noinspection PyTypeChecker
                 zz = ZigZag(junit_file_path, os.environ['QTEST_API_TOKEN'], qtest_project_id, None)
                 job_id = zz.upload_test_results()
                 SESSION_MESSAGES.append("ZigZag upload was successful!")
