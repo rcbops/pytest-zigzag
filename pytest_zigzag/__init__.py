@@ -6,9 +6,12 @@
 from __future__ import absolute_import
 import os
 import pytest
+from json import loads
 from datetime import datetime
 # noinspection PyPackageRequirements
 from zigzag.zigzag import ZigZag
+from pkg_resources import resource_stream
+from jsonschema import validate, ValidationError
 from pytest_zigzag.session_messages import SessionMessages
 
 __version__ = '0.1.5'
@@ -16,54 +19,9 @@ __version__ = '0.1.5'
 # ======================================================================================================================
 # Globals
 # ======================================================================================================================
+BUILTIN_CONFIGS = ('asc', 'mk8s', 'jenkins')
 SESSION_MESSAGES = SessionMessages()
 TEST_STEPS_MARK = 'test_case_with_steps'
-ASC_ENV_VARS = ['BUILD_URL',
-                'BUILD_NUMBER',
-                'RE_JOB_ACTION',
-                'RE_JOB_IMAGE',
-                'RE_JOB_SCENARIO',
-                'RE_JOB_BRANCH',
-                'RPC_RELEASE',
-                'RPC_PRODUCT_RELEASE',
-                'OS_ARTIFACT_SHA',
-                'PYTHON_ARTIFACT_SHA',
-                'APT_ARTIFACT_SHA',
-                'REPO_URL',
-                'JOB_NAME',
-                'MOLECULE_TEST_REPO',
-                'MOLECULE_SCENARIO_NAME',
-                'MOLECULE_GIT_COMMIT']
-MK8S_ENV_VARS = ['BUILD_URL',
-                 'BUILD_NUMBER',
-                 'BUILD_ID',
-                 'NODE_NAME',
-                 'JOB_NAME',
-                 'BUILD_TAG',
-                 'JENKINS_URL',
-                 'EXECUTOR_NUMBER',
-                 'WORKSPACE',
-                 'CVS_BRANCH',
-                 'GIT_COMMIT',
-                 'GIT_URL',
-                 'GIT_BRANCH',
-                 'GIT_LOCAL_BRANCH',
-                 'GIT_AUTHOR_NAME',
-                 'GIT_AUTHOR_EMAIL',
-                 'BRANCH_NAME',
-                 'CHANGE_AUTHOR_DISPLAY_NAME',
-                 'CHANGE_AUTHOR',
-                 'CHANGE_BRANCH',
-                 'CHANGE_FORK',
-                 'CHANGE_ID',
-                 'CHANGE_TARGET',
-                 'CHANGE_TITLE',
-                 'CHANGE_URL',
-                 'JOB_URL',
-                 'NODE_LABELS',
-                 'NODE_NAME',
-                 'PWD',
-                 'STAGE_NAME']
 ZZ_WARN_MESSAGE = "ZigZag will not attempt upload, '--zigzag' and '--qtest-project-id' must be specified together."
 
 
@@ -87,24 +45,38 @@ def _capture_marks(items, mark_names):
                     item.user_properties.append((marker.name, arg))
 
 
-def _get_ci_environment(session):
-    """Gets the ci-environment used when executing tests
-    default is 'asc'
+def _capture_ci_environment(session):
+    """Capture the CI environment variables for the current session using the scheme specified by the user.
+
+    Default is 'asc'
 
     Args:
         session (_pytest.main.Session): The pytest session object
-
-    Returns:
-        str: The value of the config with the highest precedence
     """
 
-    # Determine if the option passed with the highest precedence is a valid option
-    highest_precedence = _get_option_of_highest_precedence(session.config, 'ci-environment') or 'asc'
-    white_list = ['asc', 'mk8s']
-    if not any(x == highest_precedence for x in white_list):
-        raise RuntimeError(
-            "The value {} is not a valid value for the 'ci-environment' configuration".format(highest_precedence))
-    return highest_precedence
+    if session.config.pluginmanager.hasplugin('junitxml'):
+        junit_xml_config = getattr(session.config, '_xml', None)
+
+        if junit_xml_config:
+            # Determine if the option passed with the highest precedence is a valid option
+            highest_precedence = _get_option_of_highest_precedence(session.config, 'ci-environment') or 'asc'
+
+            if highest_precedence not in BUILTIN_CONFIGS:
+                pytest.exit(
+                    "The value '{}' is not a valid value for the 'ci-environment' configuration".format(
+                        highest_precedence
+                    ),
+                    returncode=1
+                )
+
+            # Load config
+            config_dict = _load_config_file(highest_precedence)
+
+            # Record environment variables in JUnitXML global properties
+            junit_xml_config.add_global_property('ci-environment', highest_precedence)
+
+            for env_var in config_dict['environment_variables']:
+                junit_xml_config.add_global_property(env_var, os.getenv(env_var, 'Unknown'))
 
 
 def _get_option_of_highest_precedence(config, option_name):
@@ -119,6 +91,7 @@ def _get_option_of_highest_precedence(config, option_name):
         str: The value of the option that is of highest precedence
         None: no value is present
     """
+
     #  Try to get configs from CLI and ini
     try:
         cli_option = config.getoption("--{}".format(option_name))
@@ -128,8 +101,47 @@ def _get_option_of_highest_precedence(config, option_name):
         ini_option = config.getini(option_name)
     except ValueError:
         ini_option = None
+
     highest_precedence = cli_option or ini_option
+
     return highest_precedence
+
+
+def _load_config_file(config_file):
+    """Validate and load the contents of a 'pytest-zigzag' config file into memory.
+
+    Args:
+        config_file (str): The name of the built-in config (e.g. 'asc') or the path to a valid pytest-zigzag
+            config file.
+
+    Returns:
+        dict
+    """
+
+    config_dict = {}
+    schema = loads(resource_stream('pytest_zigzag', 'data/schema/pytest-zigzag-config.schema.json').read().decode())
+
+    # Load config
+    if config_file in BUILTIN_CONFIGS:
+        config_dict = loads(
+            resource_stream('pytest_zigzag', "data/configs/{}-config.json".format(config_file)).read().decode()
+        )
+    else:
+        try:
+            with open(config_file, 'r') as f:
+                config_dict = loads(f.read())
+        except (OSError, IOError):
+            pytest.exit("Failed to load '{}' config file!".format(config_file), returncode=1)
+        except ValueError as e:
+            pytest.exit("The '{}' config file is not valid JSON: {}".format(config_file, str(e)), returncode=1)
+
+    # Validate config
+    try:
+        validate(config_dict, schema)
+    except ValidationError as e:
+        pytest.exit("Config file '{}' does not comply with schema: {}".format(config_file, str(e)), returncode=1)
+
+    return config_dict
 
 
 # ======================================================================================================================
@@ -143,6 +155,7 @@ def pytest_sessionfinish(session):
     Args:
         session (_pytest.main.Session): The pytest session object
     """
+
     SESSION_MESSAGES.drain()  # need to reset this on every pass through this hook
     if session.config.pluginmanager.hasplugin('junitxml'):
         zz_option = _get_option_of_highest_precedence(session.config, 'zigzag')
@@ -163,6 +176,7 @@ def pytest_sessionfinish(session):
 @pytest.hookimpl(trylast=True)
 def pytest_terminal_summary(terminalreporter):
     """Use this hook to add what we did to the terminal report"""
+
     for message in SESSION_MESSAGES:
         terminalreporter.write_line(message)
 
@@ -176,17 +190,10 @@ def pytest_runtestloop(session):
     """
 
     if session.config.pluginmanager.hasplugin('junitxml'):
-            junit_xml_config = getattr(session.config, '_xml', None)
+        junit_xml_config = getattr(session.config, '_xml', None)
 
-            if junit_xml_config:
-                ci_environment = _get_ci_environment(session)
-                junit_xml_config.add_global_property('ci-environment', ci_environment)
-                if ci_environment == 'asc':
-                    for env_var in ASC_ENV_VARS:
-                        junit_xml_config.add_global_property(env_var, os.getenv(env_var, 'Unknown'))
-                elif ci_environment == 'mk8s':
-                    for env_var in MK8S_ENV_VARS:
-                        junit_xml_config.add_global_property(env_var, os.getenv(env_var, 'Unknown'))
+        if junit_xml_config:
+            _capture_ci_environment(session)
 
 
 def pytest_collection_modifyitems(items):
@@ -252,8 +259,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    """
-    Allows plugins and conftest files to perform initial configuration.
+    """Allows plugins and conftest files to perform initial configuration.
 
     This hook is called for every plugin and initial conftest file after command line options have been parsed.
 
@@ -262,6 +268,7 @@ def pytest_configure(config):
     Args:
         config (_pytest.config.Config) a config object
     """
+
     zz = _get_option_of_highest_precedence(config, 'zigzag')
     qtpid = _get_option_of_highest_precedence(config, 'qtest-project-id')
 
