@@ -7,16 +7,18 @@
 # ======================================================================================================================
 from __future__ import absolute_import
 from lxml import etree
-from pytest_zigzag import MK8S_ENV_VARS, ASC_ENV_VARS
+# noinspection PyProtectedMember
+from pytest_zigzag import _load_config_file
 # noinspection PyPackageRequirements
 from zigzag.xml_parsing_facade import XmlParsingFacade
 from tests.conftest import run_and_parse
 from tests.conftest import run_and_parse_with_config
+
 # ======================================================================================================================
 # Globals
 # ======================================================================================================================
-TEST_ENV_VARS = list(ASC_ENV_VARS)      # Shallow copy.
-MK8S_TEST_ENV_VARS = list(MK8S_ENV_VARS)      # Shallow copy.
+ASC_TEST_ENV_VARS = list(_load_config_file('asc')['environment_variables'])      # Shallow copy.
+MK8S_TEST_ENV_VARS = list(_load_config_file('mk8s')['environment_variables'])      # Shallow copy.
 
 
 # ======================================================================================================================
@@ -35,6 +37,7 @@ def test_happy_path_asc(testdir, properly_decorated_test_function, mocker):
                                                                jira_id='ASC-123'))
 
     xml_doc = run_and_parse(testdir).xml_doc
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd()))
 
     # Test
@@ -59,6 +62,7 @@ ci-environment=mk8s
 """  # noqa
 
     xml_doc = run_and_parse_with_config(testdir, config).xml_doc
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
     # Test
@@ -84,6 +88,7 @@ def test_multiple_jira_references(testdir, mocker):
     """)
 
     xml_doc = run_and_parse(testdir).xml_doc
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd()))
 
     # Test
@@ -109,6 +114,7 @@ def test_multiple_jira_references_mk8s(testdir, mocker):
     """)
 
     xml_doc = run_and_parse(testdir).xml_doc
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
     # Test
@@ -128,6 +134,7 @@ def test_missing_required_marks_asc(testdir, undecorated_test_function, mocker):
     testdir.makepyfile(undecorated_test_function.format(test_name='test_typo_global'))
 
     xml_doc = run_and_parse(testdir).xml_doc
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('asc')))
 
     # Test
@@ -147,6 +154,7 @@ def test_missing_required_marks_mk8s(testdir, undecorated_test_function, mocker)
     testdir.makepyfile(undecorated_test_function.format(test_name='test_typo_global'))
 
     xml_doc = run_and_parse(testdir).xml_doc
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
     # Test
@@ -171,6 +179,7 @@ def test_extra_testcase_property_asc(testdir, properly_decorated_test_function, 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties').append(etree.Element('property',
                                                                attrib={'name': 'extra', 'value': 'fail'}))
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('asc')))
 
     # Test
@@ -195,6 +204,7 @@ def test_extra_testcase_property_mk8s(testdir, properly_decorated_test_function,
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties').append(etree.Element('property',
                                                                attrib={'name': 'extra', 'value': 'fail'}))
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
     # Test
@@ -218,6 +228,7 @@ def test_typo_property_asc(testdir, properly_decorated_test_function, mocker):
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties/property').attrib['name'] = 'wrong_test_id'
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('asc')))
 
     # Test
@@ -241,6 +252,7 @@ def test_typo_property_mk8s(testdir, properly_decorated_test_function, mocker):
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties/property').attrib['name'] = 'wrong_test_id'
+    # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd()))
 
     # Test

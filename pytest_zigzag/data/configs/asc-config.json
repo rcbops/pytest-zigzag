@@ -1,0 +1,20 @@
+{
+  "environment_variables": [
+    "BUILD_URL",
+    "BUILD_NUMBER",
+    "RE_JOB_ACTION",
+    "RE_JOB_IMAGE",
+    "RE_JOB_SCENARIO",
+    "RE_JOB_BRANCH",
+    "RPC_RELEASE",
+    "RPC_PRODUCT_RELEASE",
+    "OS_ARTIFACT_SHA",
+    "PYTHON_ARTIFACT_SHA",
+    "APT_ARTIFACT_SHA",
+    "REPO_URL",
+    "JOB_NAME",
+    "MOLECULE_TEST_REPO",
+    "MOLECULE_SCENARIO_NAME",
+    "MOLECULE_GIT_COMMIT"
+  ]
+}

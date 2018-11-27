@@ -1,6 +1,7 @@
 include LICENSE
 include README.rst
 include HISTORY.rst
+recursive-include pytest_zigzag/data *
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
