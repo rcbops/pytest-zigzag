@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
-
 # ======================================================================================================================
 # Imports
 # ======================================================================================================================
 from __future__ import absolute_import
-from tests.conftest import run_and_parse_with_config
-from tests.conftest import JunitXml
 import re
+from tests.conftest import JunitXml
+from tests.conftest import run_and_parse_with_config
 
 
 # ======================================================================================================================
@@ -146,7 +145,8 @@ ci-environment=foobar
         f.write(config)
 
     result = testdir.runpytest("--junitxml={}".format(result_path), "-c={}".format(config_path))
+    assert result.ret == 1
 
     out_lines = [str(x) for x in result.outlines]
-    expected_error = re.compile('.*RuntimeError: The value foobar is not a valid value.*')
+    expected_error = re.compile(".*Exit: The value 'foobar' is not a valid value.*")
     assert any(re.match(expected_error, x) for x in out_lines)
