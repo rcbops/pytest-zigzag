@@ -16,7 +16,7 @@ def test_zigzag_happy_path(testdir, single_decorated_test_function, mocker):
     test_id_exp = '123e4567-e89b-12d3-a456-426655440000'
     test_name_exp = 'test_uuid'
     project_id = '12345'
-    env_vars = {'QTEST_API_TOKEN': 'valid_token'}
+    env_vars = {'QTEST_API_TOKEN': 'validtoken'}
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
@@ -73,7 +73,7 @@ def test_zigzag_no_project_id(testdir, single_decorated_test_function, mocker):
     mark_type_exp = 'test_id'
     test_id_exp = '123e4567-e89b-12d3-a456-426655440000'
     test_name_exp = 'test_uuid'
-    env_vars = {'QTEST_API_TOKEN': 'valid_token'}
+    env_vars = {'QTEST_API_TOKEN': 'validtoken'}
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
@@ -101,7 +101,7 @@ def test_no_zigzag(testdir, single_decorated_test_function, mocker):
     test_id_exp = '123e4567-e89b-12d3-a456-426655440000'
     test_name_exp = 'test_uuid'
     project_id = '12345'
-    env_vars = {'QTEST_API_TOKEN': 'valid_token'}
+    env_vars = {'QTEST_API_TOKEN': 'validtoken'}
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))

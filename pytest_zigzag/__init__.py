@@ -5,6 +5,7 @@
 # ======================================================================================================================
 from __future__ import absolute_import
 import os
+import re
 import pytest
 from datetime import datetime
 # noinspection PyPackageRequirements
@@ -132,6 +133,10 @@ def _get_option_of_highest_precedence(config, option_name):
     return highest_precedence
 
 
+def _validate_qtest_token(token):
+    return token if re.match("^[a-zA-Z0-9]+$", token) else ""
+
+
 # ======================================================================================================================
 # Hooks
 # ======================================================================================================================
@@ -151,7 +156,9 @@ def pytest_sessionfinish(session):
             try:
                 junit_file_path = getattr(session.config, '_xml', None).logfile
                 # noinspection PyTypeChecker
-                zz = ZigZag(junit_file_path, os.environ['QTEST_API_TOKEN'], qtest_project_id, None)
+                # validate token
+                token = _validate_qtest_token(os.environ['QTEST_API_TOKEN'])
+                zz = ZigZag(junit_file_path, token, qtest_project_id, None)
                 job_id = zz.upload_test_results()
                 SESSION_MESSAGES.append("ZigZag upload was successful!")
                 SESSION_MESSAGES.append("Queue Job ID: {}".format(job_id))
