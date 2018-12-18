@@ -7,10 +7,39 @@
   "properties": {
     "environment_variables": {
       "description": "A white list of environment variables to extract and include in the JUnitXML global properties.",
-      "type": "array",
-      "items": {
-        "type": "string"
+      "type": "object",
+      "properties": {
+        "BUILD_URL":    {"type": ["string", "null"]},
+        "BUILD_NUMBER": {"type": ["number", "null"]},
+        "BUILD_ID": {"type": ["string", "null"] },
+        "NODE_NAME": {"type": ["number", "null"] },
+        "JOB_NAME": {"type": ["number", "null"] },
+        "BUILD_TAG": {"type": ["number", "null"] },
+        "JENKINS_URL": {"type": ["number", "null"] },
+        "EXECUTOR_NUMBER": {"type": ["string", "null"]},
+        "WORKSPACE": {"type": ["string", "null"]},
+        "CVS_BRANCH": {"type": ["string", "null"]},
+        "GIT_COMMIT": {"type": ["string", "null"]},
+        "GIT_URL": {"type": ["string", "null"]},
+        "GIT_BRANCH": {"type": ["string", "null"]},
+        "GIT_LOCAL_BRANCH": {"type": ["string", "null"]},
+        "GIT_AUTHOR_NAME": {"type": ["string", "null"]},
+        "GIT_AUTHOR_EMAIL": {"type": ["string", "null"]},
+        "BRANCH_NAME": {"type": ["string", "null"]},
+        "CHANGE_AUTHOR_DISPLAY_NAME": {"type": ["string", "null"]},
+        "CHANGE_AUTHOR": {"type": ["string", "null"]},
+        "CHANGE_BRANCH": {"type": ["string", "null"]},
+        "CHANGE_FORK": {"type": ["string", "null"]},
+        "CHANGE_ID": {"type": ["string", "null"]},
+        "CHANGE_TARGET": {"type": ["string", "null"]},
+        "CHANGE_TITLE": {"type": ["string", "null"]},
+        "CHANGE_URL": {"type": ["string", "null"]},
+        "JOB_URL": {"type": ["string", "null"]},
+        "NODE_LABELS": {"type": ["string", "null"]},
+        "PWD": {"type": ["string", "null"]},
+        "STAGE_NAME": {"type": ["string", "null"]}
       },
+      "required": ["BUILD_URL", "BUILD_NUMBER"],
       "minItems": 1,
       "uniqueItems": true
     }
