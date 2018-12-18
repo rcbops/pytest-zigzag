@@ -45,6 +45,7 @@ def _capture_marks(items, mark_names):
                 for arg in marker.args:
                     item.user_properties.append((marker.name, arg))
 
+
 def _capture_ci_environment(session):
     """Capture the CI environment variables for the current session using the scheme specified by the user.
 
@@ -76,7 +77,9 @@ def _capture_ci_environment(session):
             junit_xml_config.add_global_property('ci-environment', highest_precedence)
 
             for env_var in config_dict['environment_variables']:
-                junit_xml_config.add_global_property(env_var, os.getenv(env_var, 'Unknown'))
+                junit_xml_config.add_global_property(env_var,
+                                                     os.getenv(env_var,
+                                                               config_dict['environment_variables'][env_var]))
 
 
 def _get_option_of_highest_precedence(config, option_name):
@@ -108,6 +111,7 @@ def _get_option_of_highest_precedence(config, option_name):
 
 def _validate_qtest_token(token):
     return token if re.match("^[a-zA-Z0-9]+$", token) else ""
+
 
 def _load_config_file(config_file):
     """Validate and load the contents of a 'pytest-zigzag' config file into memory.

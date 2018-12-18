@@ -32,7 +32,7 @@ def test_no_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_e
     assert is_sub_dict(testsuite_attribs_exp, junit_xml.testsuite_attribs)
 
     for env_var in ASC_TEST_ENV_VARS:
-        assert junit_xml.testsuite_props[env_var] == 'Unknown'
+        assert junit_xml.testsuite_props[env_var] == 'None'
 
 
 def test_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp):
