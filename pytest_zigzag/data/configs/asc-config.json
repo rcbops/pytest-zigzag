@@ -1,20 +1,20 @@
 {
-  "environment_variables": [
-    "BUILD_URL",
-    "BUILD_NUMBER",
-    "RE_JOB_ACTION",
-    "RE_JOB_IMAGE",
-    "RE_JOB_SCENARIO",
-    "RE_JOB_BRANCH",
-    "RPC_RELEASE",
-    "RPC_PRODUCT_RELEASE",
-    "OS_ARTIFACT_SHA",
-    "PYTHON_ARTIFACT_SHA",
-    "APT_ARTIFACT_SHA",
-    "REPO_URL",
-    "JOB_NAME",
-    "MOLECULE_TEST_REPO",
-    "MOLECULE_SCENARIO_NAME",
-    "MOLECULE_GIT_COMMIT"
-  ]
+  "environment_variables": {
+    "BUILD_URL": null,
+    "BUILD_NUMBER": null,
+    "RE_JOB_ACTION": null,
+    "RE_JOB_IMAGE": null,
+    "RE_JOB_SCENARIO": null,
+    "RE_JOB_BRANCH": null,
+    "RPC_RELEASE": null,
+    "RPC_PRODUCT_RELEASE": null,
+    "OS_ARTIFACT_SHA": null,
+    "PYTHON_ARTIFACT_SHA": null,
+    "APT_ARTIFACT_SHA": null,
+    "REPO_URL": null,
+    "JOB_NAME": null,
+    "MOLECULE_TEST_REPO": null,
+    "MOLECULE_SCENARIO_NAME": null,
+    "MOLECULE_GIT_COMMIT": null
+  }
 }
