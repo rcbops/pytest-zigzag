@@ -58,17 +58,21 @@ def _capture_ci_environment(session):
     if session.config.pluginmanager.hasplugin('junitxml'):
         junit_xml_config = getattr(session.config, '_xml', None)
 
+        highest_precedence = None
+
         if junit_xml_config:
             # Determine if the option passed with the highest precedence is a valid option
-            highest_precedence = _get_option_of_highest_precedence(session.config, 'ci-environment') or 'asc'
-
-            if highest_precedence not in BUILTIN_CONFIGS:
-                pytest.exit(
-                    "The value '{}' is not a valid value for the 'ci-environment' configuration".format(
-                        highest_precedence
-                    ),
-                    returncode=1
-                )
+            if not _get_option_of_highest_precedence(session.config, 'pytest-config'):
+                highest_precedence = _get_option_of_highest_precedence(session.config, 'ci-environment') or 'asc'
+                if highest_precedence not in BUILTIN_CONFIGS:
+                    pytest.exit(
+                                    "The value '{}' is not a valid value for the 'ci-environment' configuration".format(
+                                        highest_precedence
+                                    ),
+                                    returncode=1
+                                )
+            else:
+                highest_precedence = _get_option_of_highest_precedence(session.config, 'pytest-config')
 
             # Load config
             config_dict = _load_config_file(highest_precedence)
@@ -127,7 +131,6 @@ def _load_config_file(config_file):
     config_dict = {}
     schema = loads(resource_stream('pytest_zigzag', 'data/schema/pytest-zigzag-config.schema.json').read().decode())
 
-    # Load config
     if config_file in BUILTIN_CONFIGS:
         config_dict = loads(
             resource_stream('pytest_zigzag', "data/configs/{}-config.json".format(config_file)).read().decode()
@@ -250,6 +253,11 @@ def pytest_addoption(parser):
     Args:
         parser (_pytest.config.Parser): A parser object
     """
+
+    config_option = "pytest-config"
+    config_option_help = "A config file path to be used for the parser."
+    parser.addini(config_option, config_option_help)
+    parser.addoption("--{}".format(config_option), help=config_option_help)
 
     config_option = "ci-environment"
     config_option_help = "The ci-environment used to execute the tests, (default: 'asc')"
