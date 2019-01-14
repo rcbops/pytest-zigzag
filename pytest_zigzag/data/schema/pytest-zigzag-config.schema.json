@@ -12,7 +12,7 @@
         "BUILD_URL": {"type": ["string", "null"]},
         "BUILD_NUMBER": {"type": ["number", "null"]},
         "BUILD_ID": {"type": ["string", "null"] },
-        "MODULE_HIERARCHY": {"type": ["string", "null"] },
+        "MODULE_HIERARCHY": {"type": ["array", "null"] },
         "NODE_NAME": {"type": ["string", "null"] },
         "JOB_NAME": {"type": ["string", "null"] },
         "BUILD_TAG": {"type": ["string", "null"] },
