@@ -418,3 +418,47 @@ def sleepy_test_function():
         """
 
     return py_file
+
+
+@pytest.fixture(scope='session')
+def failure_in_test_setup():
+    """A Python function that has a fixture that fails setup with the following named formatters:
+
+        test_name: Name of the test_function
+    """
+
+    py_file = \
+        """
+        import pytest
+        @pytest.fixture(scope='function')
+        def my_test_fixture():
+            assert False
+            yield
+            pass
+        def {test_name}(my_test_fixture):
+            pass
+        """
+
+    return py_file
+
+
+@pytest.fixture(scope='session')
+def failure_in_test_teardown():
+    """A Python function that has a fixture that fails teardown with the following named formatters:
+
+        test_name: Name of the test_function
+    """
+
+    py_file = \
+        """
+        import pytest
+        @pytest.fixture(scope='function')
+        def my_test_fixture():
+            pass
+            yield
+            assert False
+        def {test_name}(my_test_fixture):
+            pass
+        """
+
+    return py_file
