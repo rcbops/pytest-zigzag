@@ -8,23 +8,15 @@
 from __future__ import absolute_import
 from lxml import etree
 # noinspection PyProtectedMember
-from pytest_zigzag import _load_config_file
 # noinspection PyPackageRequirements
 from zigzag.xml_parsing_facade import XmlParsingFacade
-from tests.conftest import run_and_parse
-from tests.conftest import run_and_parse_with_config
-
-# ======================================================================================================================
-# Globals
-# ======================================================================================================================
-ASC_TEST_ENV_VARS = list(_load_config_file('asc')['environment_variables'])      # Shallow copy.
-MK8S_TEST_ENV_VARS = list(_load_config_file('mk8s')['environment_variables'])      # Shallow copy.
+from tests.conftest import run_and_parse_with_json_config
 
 
 # ======================================================================================================================
 # Tests
 # ======================================================================================================================
-def test_happy_path_asc(testdir, properly_decorated_test_function, mocker):
+def test_happy_path_asc(testdir, properly_decorated_test_function, mocker, simple_test_config):
     """Verify that 'get_xsd' returns an XSD stream that can be used to validate JUnitXML."""
 
     # Mock
@@ -36,7 +28,7 @@ def test_happy_path_asc(testdir, properly_decorated_test_function, mocker):
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, simple_test_config)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd()))
 
@@ -44,7 +36,7 @@ def test_happy_path_asc(testdir, properly_decorated_test_function, mocker):
     xmlschema.assertValid(xml_doc)
 
 
-def test_happy_path_mk8s(testdir, properly_decorated_test_function, mocker):
+def test_happy_path_mk8s(testdir, properly_decorated_test_function, mocker, mk8s_test_config):
     """Verify that 'get_xsd' returns an XSD stream that can be used to validate JUnitXML when configured with mk8s."""
 
     # Mock
@@ -55,13 +47,8 @@ def test_happy_path_mk8s(testdir, properly_decorated_test_function, mocker):
     testdir.makepyfile(properly_decorated_test_function.format(test_name='test_happy_path',
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
-    config = \
-"""
-[pytest]
-ci-environment=mk8s
-"""  # noqa
 
-    xml_doc = run_and_parse_with_config(testdir, config).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, mk8s_test_config)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
@@ -69,7 +56,7 @@ ci-environment=mk8s
     xmlschema.assertValid(xml_doc)
 
 
-def test_multiple_jira_references(testdir, mocker):
+def test_multiple_jira_references(testdir, mocker, simple_test_config):
     """Verify that 'get_xsd' returns an XSD stream when a testcase is decorated Jira mark with multiple
     arguments for the 'asc' CI environment.
     """
@@ -87,7 +74,7 @@ def test_multiple_jira_references(testdir, mocker):
                     pass
     """)
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, simple_test_config)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd()))
 
@@ -95,7 +82,7 @@ def test_multiple_jira_references(testdir, mocker):
     xmlschema.assertValid(xml_doc)
 
 
-def test_multiple_jira_references_mk8s(testdir, mocker):
+def test_multiple_jira_references_mk8s(testdir, mocker, mk8s_test_config):
     """Verify that 'get_xsd' returns an XSD stream when a testcase is decorated Jira mark with multiple
     arguments for the 'mk8s' CI environment.
     """
@@ -113,7 +100,7 @@ def test_multiple_jira_references_mk8s(testdir, mocker):
                     pass
     """)
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, mk8s_test_config)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
@@ -121,7 +108,7 @@ def test_multiple_jira_references_mk8s(testdir, mocker):
     xmlschema.assertValid(xml_doc)
 
 
-def test_missing_required_marks_asc(testdir, undecorated_test_function, mocker):
+def test_missing_required_marks_asc(testdir, undecorated_test_function, mocker, asc_test_config):
     """Verify that XSD will enforce the presence of 'test_id' and 'jira_id' properties for test cases for the 'asc'
     CI environment.
     """
@@ -133,7 +120,7 @@ def test_missing_required_marks_asc(testdir, undecorated_test_function, mocker):
     # Setup
     testdir.makepyfile(undecorated_test_function.format(test_name='test_typo_global'))
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, asc_test_config)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('asc')))
 
@@ -141,7 +128,7 @@ def test_missing_required_marks_asc(testdir, undecorated_test_function, mocker):
     assert xmlschema.validate(xml_doc) is False
 
 
-def test_missing_required_marks_mk8s(testdir, undecorated_test_function, mocker):
+def test_missing_required_marks_mk8s(testdir, undecorated_test_function, mocker, mk8s_test_config):
     """Verify that XSD will enforce the presence of 'test_id' and 'jira_id' properties for test cases  for the 'mk8s'
     CI environment.
     """
@@ -153,7 +140,7 @@ def test_missing_required_marks_mk8s(testdir, undecorated_test_function, mocker)
     # Setup
     testdir.makepyfile(undecorated_test_function.format(test_name='test_typo_global'))
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, mk8s_test_config)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
@@ -161,7 +148,7 @@ def test_missing_required_marks_mk8s(testdir, undecorated_test_function, mocker)
     assert xmlschema.validate(xml_doc) is False
 
 
-def test_extra_testcase_property_asc(testdir, properly_decorated_test_function, mocker):
+def test_extra_testcase_property_asc(testdir, properly_decorated_test_function, mocker, asc_test_config):
     """Verify that XSD will enforce the strict presence of only required test case properties for the 'asc'
     CI environment."""
 
@@ -174,7 +161,7 @@ def test_extra_testcase_property_asc(testdir, properly_decorated_test_function, 
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, asc_test_config)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties').append(etree.Element('property',
@@ -186,7 +173,7 @@ def test_extra_testcase_property_asc(testdir, properly_decorated_test_function, 
     assert xmlschema.validate(xml_doc) is False
 
 
-def test_extra_testcase_property_mk8s(testdir, properly_decorated_test_function, mocker):
+def test_extra_testcase_property_mk8s(testdir, properly_decorated_test_function, mocker, mk8s_test_config):
     """Verify that XSD will enforce the strict presence of only required test case properties for the 'mk8s'
     CI environment."""
 
@@ -199,7 +186,7 @@ def test_extra_testcase_property_mk8s(testdir, properly_decorated_test_function,
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, mk8s_test_config)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties').append(etree.Element('property',
@@ -211,7 +198,7 @@ def test_extra_testcase_property_mk8s(testdir, properly_decorated_test_function,
     assert xmlschema.validate(xml_doc) is False
 
 
-def test_typo_property_asc(testdir, properly_decorated_test_function, mocker):
+def test_typo_property_asc(testdir, properly_decorated_test_function, mocker, asc_test_config):
     """Verify that XSD will enforce the only certain property names are allowed for the testcase for the 'asc'
     CI environment."""
 
@@ -224,7 +211,7 @@ def test_typo_property_asc(testdir, properly_decorated_test_function, mocker):
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, asc_test_config)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties/property').attrib['name'] = 'wrong_test_id'
@@ -235,7 +222,7 @@ def test_typo_property_asc(testdir, properly_decorated_test_function, mocker):
     assert xmlschema.validate(xml_doc) is False
 
 
-def test_typo_property_mk8s(testdir, properly_decorated_test_function, mocker):
+def test_typo_property_mk8s(testdir, properly_decorated_test_function, mocker, simple_test_config):
     """Verify that XSD will enforce the only certain property names are allowed for the testcase for the 'mk8s'
     CI environment."""
 
@@ -248,7 +235,7 @@ def test_typo_property_mk8s(testdir, properly_decorated_test_function, mocker):
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse(testdir).xml_doc
+    xml_doc = run_and_parse_with_json_config(testdir, simple_test_config)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties/property').attrib['name'] = 'wrong_test_id'

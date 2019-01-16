@@ -9,24 +9,25 @@ from __future__ import absolute_import
 import os
 # noinspection PyProtectedMember
 from pytest_zigzag import _load_config_file
-from tests.conftest import run_and_parse, is_sub_dict
+from tests.conftest import is_sub_dict, run_and_parse_with_json_config
 
 # ======================================================================================================================
 # Globals
 # ======================================================================================================================
-ASC_TEST_ENV_VARS = list(_load_config_file('asc')['environment_variables'])      # Shallow copy.
+config_file = './pytest_zigzag/data/configs/default-config.json'
+ASC_TEST_ENV_VARS = list(_load_config_file(config_file)['environment_variables'])      # Shallow copy.
 
 
 # ======================================================================================================================
 # Tests
 # ======================================================================================================================
-def test_no_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp):
+def test_no_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp, simple_test_config):
     """Verify that pytest accepts our fixture without setting any environment variables."""
 
     # Setup
     testdir.makepyfile(undecorated_test_function.format(test_name='test_pass'))
 
-    junit_xml = run_and_parse(testdir)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
 
     # Test
     assert is_sub_dict(testsuite_attribs_exp, junit_xml.testsuite_attribs)
@@ -35,7 +36,7 @@ def test_no_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_e
         assert junit_xml.testsuite_props[env_var] == 'None'
 
 
-def test_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp):
+def test_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp, simple_test_config):
     """Verify that pytest accepts our fixture with all relevant environment variables set."""
 
     # Setup
@@ -44,11 +45,10 @@ def test_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp)
     for env in ASC_TEST_ENV_VARS:
         os.environ[env] = env
 
-    junit_xml = run_and_parse(testdir)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
 
     # Test
     assert is_sub_dict(testsuite_attribs_exp, junit_xml.testsuite_attribs)
 
     expected = {env: env for env in ASC_TEST_ENV_VARS}
-    expected['ci-environment'] = 'asc'  # This is not supplied by the environment
     assert junit_xml.testsuite_props == expected

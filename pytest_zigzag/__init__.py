@@ -20,7 +20,6 @@ __version__ = '0.2.0'
 # ======================================================================================================================
 # Globals
 # ======================================================================================================================
-BUILTIN_CONFIGS = ('asc', 'mk8s', 'jenkins')
 SESSION_MESSAGES = SessionMessages()
 TEST_STEPS_MARK = 'test_case_with_steps'
 ZZ_WARN_MESSAGE = "ZigZag will not attempt upload, '--zigzag' and '--qtest-project-id' must be specified together."
@@ -49,8 +48,6 @@ def _capture_marks(items, mark_names):
 def _capture_ci_environment(session):
     """Capture the CI environment variables for the current session using the scheme specified by the user.
 
-    Default is 'asc'
-
     Args:
         session (_pytest.main.Session): The pytest session object
     """
@@ -61,24 +58,18 @@ def _capture_ci_environment(session):
         highest_precedence = None
 
         if junit_xml_config:
-            # Determine if the option passed with the highest precedence is a valid option
-            if not _get_option_of_highest_precedence(session.config, 'pytest-config'):
-                highest_precedence = _get_option_of_highest_precedence(session.config, 'ci-environment') or 'asc'
-                if highest_precedence not in BUILTIN_CONFIGS:
-                    pytest.exit(
-                                    "The value '{}' is not a valid value for the 'ci-environment' configuration".format(
-                                        highest_precedence
-                                    ),
-                                    returncode=1
-                                )
-            else:
+            # Determine the config option that we should use
+            if _get_option_of_highest_precedence(session.config, 'config_file'):
+                highest_precedence = _get_option_of_highest_precedence(session.config, 'config_file')
+            if _get_option_of_highest_precedence(session.config, 'pytest-config'):
                 highest_precedence = _get_option_of_highest_precedence(session.config, 'pytest-config')
+            if not highest_precedence:
+                highest_precedence = "./pytest_zigzag/data/configs/default-config.json"
 
             # Load config
             config_dict = _load_config_file(highest_precedence)
 
             # Record environment variables in JUnitXML global properties
-            junit_xml_config.add_global_property('ci-environment', highest_precedence)
 
             for env_var in config_dict['environment_variables']:
                 junit_xml_config.add_global_property(env_var,
@@ -121,28 +112,22 @@ def _load_config_file(config_file):
     """Validate and load the contents of a 'pytest-zigzag' config file into memory.
 
     Args:
-        config_file (str): The name of the built-in config (e.g. 'asc') or the path to a valid pytest-zigzag
-            config file.
+        config_file (str): The path to a pytest_zigzag config file.
 
     Returns:
-        dict
+        config_dict (dict): A dictionary of property names and associated values.
     """
 
     config_dict = {}
     schema = loads(resource_stream('pytest_zigzag', 'data/schema/pytest-zigzag-config.schema.json').read().decode())
 
-    if config_file in BUILTIN_CONFIGS:
-        config_dict = loads(
-            resource_stream('pytest_zigzag', "data/configs/{}-config.json".format(config_file)).read().decode()
-        )
-    else:
-        try:
-            with open(config_file, 'r') as f:
-                config_dict = loads(f.read())
-        except (OSError, IOError):
-            pytest.exit("Failed to load '{}' config file!".format(config_file), returncode=1)
-        except ValueError as e:
-            pytest.exit("The '{}' config file is not valid JSON: {}".format(config_file, str(e)), returncode=1)
+    try:
+        with open(config_file, 'r') as f:
+            config_dict = loads(f.read())
+    except (OSError, IOError):
+        pytest.exit("Failed to load '{}' config file!".format(config_file), returncode=1)
+    except ValueError as e:
+        pytest.exit("The '{}' config file is not valid JSON: {}".format(config_file, str(e)), returncode=1)
 
     # Validate config
     try:
@@ -270,8 +255,8 @@ def pytest_addoption(parser):
     parser.addini(config_option, config_option_help)
     parser.addoption("--{}".format(config_option), help=config_option_help)
 
-    config_option = "ci-environment"
-    config_option_help = "The ci-environment used to execute the tests, (default: 'asc')"
+    config_option = "config_file"
+    config_option_help = "The path to a json config file."
     parser.addini(config_option, config_option_help)
     parser.addoption("--{}".format(config_option), help=config_option_help)
 
