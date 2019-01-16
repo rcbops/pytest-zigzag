@@ -227,3 +227,41 @@ def test_accurate_test_time(testdir, sleepy_test_function):
     end = date_parser.parse(str(junit_xml.get_testcase_property(test_name_exp, 'end_time')[0]))
 
     assert (end - start).seconds == sleep_seconds_exp
+
+
+@pytest.mark.skipif('SKIP_LONG_RUNNING_TESTS' in os.environ, reason='Impatient developer is impatient')
+def test_failure_in_setup_fixture(testdir, failure_in_test_setup):
+    """Verify that we still get start and end time if test fails setup fixture"""
+
+    # Expect
+    test_name_exp = 'test_oops_i_failed_my_setup'
+
+    # Setup
+    testdir.makepyfile(failure_in_test_setup.format(test_name=test_name_exp))
+
+    junit_xml = run_and_parse(testdir, 1)
+
+    try:
+        date_parser.parse(str(junit_xml.get_testcase_property(test_name_exp, 'start_time')[0]))
+        date_parser.parse(str(junit_xml.get_testcase_property(test_name_exp, 'end_time')[0]))
+    except IndexError:
+        raise AssertionError('Could not find start_time and end_time')
+
+
+@pytest.mark.skipif('SKIP_LONG_RUNNING_TESTS' in os.environ, reason='Impatient developer is impatient')
+def test_failure_in_teardown_fixture(testdir, failure_in_test_teardown):
+    """Verify that we still get start and end time if test fails teardown fixture"""
+
+    # Expect
+    test_name_exp = 'test_oops_i_failed_my_teardown'
+
+    # Setup
+    testdir.makepyfile(failure_in_test_teardown.format(test_name=test_name_exp))
+
+    junit_xml = run_and_parse(testdir, 1)
+
+    try:
+        date_parser.parse(str(junit_xml.get_testcase_property(test_name_exp, 'start_time')[0]))
+        date_parser.parse(str(junit_xml.get_testcase_property(test_name_exp, 'end_time')[0]))
+    except IndexError:
+        raise AssertionError('Could not find start_time and end_time')

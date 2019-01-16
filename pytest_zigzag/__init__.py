@@ -217,6 +217,7 @@ def pytest_runtest_setup(item):
 
     now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     item.user_properties.append(('start_time', now))
+    item.user_properties.append(('end_time', now))  # will override if we get to teardown
 
     if "test_case_with_steps" in item.keywords and 'setup' not in item.name and 'teardown' not in item.name:
         previousfailed = getattr(item.parent, "_previousfailed", None)
@@ -232,8 +233,18 @@ def pytest_runtest_teardown(item):
         item (_pytest.nodes.Item): An item object.
     """
 
-    now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-    item.user_properties.append(('end_time', now))
+    now_tup = ('end_time', datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'))
+    position = None
+
+    # find the position of end_time tuple
+    for n, tup in enumerate(item.user_properties):
+        if tup[0] == 'end_time':
+            position = n
+
+    if position is not None:
+        item.user_properties[position] = now_tup
+    else:
+        item.user_properties.append(now_tup)
 
 
 def pytest_addoption(parser):
