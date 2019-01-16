@@ -4,16 +4,14 @@
 # Imports
 # ======================================================================================================================
 from __future__ import absolute_import
-import re
-from tests.conftest import JunitXml
-from tests.conftest import run_and_parse_with_config
+from tests.conftest import run_and_parse_with_json_config
 
 
 # ======================================================================================================================
 # Tests
 # ======================================================================================================================
-def test_config_asc(testdir, single_decorated_test_function):
-    """Verify that 'ci-environment' with a value of 'asc' can be supplied in the config"""
+def test_custom_config(testdir, single_decorated_test_function, simple_test_config):
+    """Ensure that we can use a known good json document."""
 
     # Expect
     mark_type_exp = 'test_id'
@@ -24,21 +22,15 @@ def test_config_asc(testdir, single_decorated_test_function):
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
-    config = \
-"""
-[pytest]
-ci-environment=asc
-"""  # noqa
 
-    junit_xml = run_and_parse_with_config(testdir, config)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
 
     # Test
-    assert 'ci-environment' in junit_xml.testsuite_props
-    assert junit_xml.testsuite_props['ci-environment'] == 'asc'
+    assert junit_xml.testsuite_props
 
 
-def test_config_mk8s(testdir, single_decorated_test_function):
-    """Verify that 'ci-environment' with a value of 'mk8s' can be supplied in the config"""
+def test_custom_config_value(testdir, single_decorated_test_function):
+    """Ensure that a value set in the config will end up as a property in xml."""
 
     # Expect
     mark_type_exp = 'test_id'
@@ -50,20 +42,23 @@ def test_config_mk8s(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-"""
-[pytest]
-ci-environment=mk8s
-"""  # noqa
+        """
+        {
+          "environment_variables": {
+            "BUILD_URL": "foo",
+            "BUILD_NUMBER": null
+          }
+        }
+        """
 
-    junit_xml = run_and_parse_with_config(testdir, config)
+    junit_xml = run_and_parse_with_json_config(testdir, config)[0]
 
     # Test
-    assert 'ci-environment' in junit_xml.testsuite_props
-    assert junit_xml.testsuite_props['ci-environment'] == 'mk8s'
+    assert junit_xml.testsuite_props['BUILD_URL'] == 'foo'
 
 
-def test_config_default(testdir, single_decorated_test_function):
-    """Verify the default value for 'ci-environment'"""
+def test_malformed_custom_config(testdir, single_decorated_test_function):
+    """Ensure failure given a malformed json doc."""
 
     # Expect
     mark_type_exp = 'test_id'
@@ -75,19 +70,23 @@ def test_config_default(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-"""
-[pytest]
-"""  # noqa
+        """
+        {
+          "environment_variables": {
+            "BUILD_URL": "foo",
+            "BUILD_NUMBER": null,
+          }
+        }
+        """
 
-    junit_xml = run_and_parse_with_config(testdir, config)
+    result = run_and_parse_with_json_config(testdir, config, exit_code_exp=1)
 
     # Test
-    assert 'ci-environment' in junit_xml.testsuite_props
-    assert junit_xml.testsuite_props['ci-environment'] == 'asc'
+    assert 'config file is not valid JSON' in result[1].stderr.lines[0]
 
 
-def test_cli_trumps_config(testdir, single_decorated_test_function):
-    """Verify that 'ci-environment' passed via the CLI has the highest precedence"""
+def test_custom_properties_in_custom_config(testdir, single_decorated_test_function):
+    """Test that a custom config with non-standard parameters can be used."""
 
     # Expect
     mark_type_exp = 'test_id'
@@ -99,30 +98,26 @@ def test_cli_trumps_config(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-"""
-[pytest]
-ci-environment=asc
-"""  # noqa
+        """
+        {
+          "environment_variables": {
+            "FOO": "foo",
+            "BAR": "bar",
+            "BUILD_URL": null,
+            "BUILD_NUMBER": null
+          }
+        }
+        """
 
-    result_path = testdir.tmpdir.join('junit.xml')
-    config_path = testdir.tmpdir.join('conf.conf')
-    with open(str(config_path), 'w') as f:
-        f.write(config)
-
-    result = testdir.runpytest(
-        "--junitxml={}".format(result_path), "-c={}".format(config_path), "--ci-environment=mk8s")
-
-    assert result.ret == 0
-
-    junit_xml = JunitXml(str(result_path))
+    result = run_and_parse_with_json_config(testdir, config)
 
     # Test
-    assert 'ci-environment' in junit_xml.testsuite_props
-    assert junit_xml.testsuite_props['ci-environment'] == 'mk8s'
+    assert result[0].testsuite_props['FOO'] == 'foo'
+    assert result[0].testsuite_props['BAR'] == 'bar'
 
 
-def test_unknown_value(testdir, single_decorated_test_function):
-    """Verify the default value for 'ci-environment'"""
+def test_required_parameters_are_required(testdir, single_decorated_test_function):
+    """Test that a config missing required params will fail."""
 
     # Expect
     mark_type_exp = 'test_id'
@@ -134,19 +129,29 @@ def test_unknown_value(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-"""
-[pytest]
-ci-environment=foobar
-"""  # noqa
+        """
+        {
+          "environment_variables": {
+            "BUILD_NUMBER": null
+          }
+        }
+        """
 
-    result_path = testdir.tmpdir.join('junit.xml')
-    config_path = testdir.tmpdir.join('conf.conf')
-    with open(str(config_path), 'w') as f:
-        f.write(config)
+    result = run_and_parse_with_json_config(testdir, config, exit_code_exp=1)
 
-    result = testdir.runpytest("--junitxml={}".format(result_path), "-c={}".format(config_path))
-    assert result.ret == 1
+    # Test
+    assert "does not comply with schema: u'BUILD_URL' is a required property" in result[1].stderr.lines[0]
 
-    out_lines = [str(x) for x in result.outlines]
-    expected_error = re.compile(".*Exit: The value 'foobar' is not a valid value.*")
-    assert any(re.match(expected_error, x) for x in out_lines)
+    config = \
+        """
+        {
+          "environment_variables": {
+            "BUILD_URL": null
+          }
+        }
+        """
+
+    result = run_and_parse_with_json_config(testdir, config, exit_code_exp=1)
+
+    # Test
+    assert "does not comply with schema: u'BUILD_NUMBER' is a required property" in result[1].stderr.lines[0]

@@ -125,6 +125,37 @@ def run_and_parse(testdir, exit_code_exp=0, runpytest_args=None):
     return junit_xml_doc
 
 
+def run_and_parse_with_json_config(testdir, config, exit_code_exp=0, runpytest_args=None):
+    """Execute a pytest run against a directory containing pytest Python files.
+
+    Args:
+        testdir (_pytest.pytester.TestDir): A pytest fixture for testing pytest plug-ins.
+        config (str): The contents of the config that you want to use.
+        exit_code_exp (int): The expected exit code for pytest run. (Default = 0)
+        runpytest_args (list(object)): A list of positional arguments to pass into the "testdir" fixture.
+            (Default = [])
+
+    Returns:
+        JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.
+    """
+
+    runpytest_args = [] if not runpytest_args else runpytest_args
+    result_path = testdir.tmpdir.join('junit.xml')
+    config_path = testdir.tmpdir.join('conf.json')
+    with open(str(config_path), 'w') as f:
+        f.write(config)
+
+    result = testdir.runpytest("--junitxml={}".format(result_path),
+                               "--config_file={}".format(config_path),
+                               *runpytest_args)
+
+    assert result.ret == exit_code_exp
+
+    junit_xml_doc = JunitXml(str(result_path))
+
+    return [junit_xml_doc, result]
+
+
 def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=None):
     """Execute a pytest run against a directory containing pytest Python files.
 
@@ -418,3 +449,113 @@ def sleepy_test_function():
         """
 
     return py_file
+
+
+@pytest.fixture(scope='session')
+def simple_test_config():
+    """Provides a simple test config
+    """
+    config = \
+        """
+        {
+          "environment_variables": {
+            "BUILD_URL": null,
+            "MODULE_HIERARCHY": null,
+            "BUILD_NUMBER": null,
+            "RE_JOB_ACTION": null,
+            "RE_JOB_IMAGE": null,
+            "RE_JOB_SCENARIO": null,
+            "RE_JOB_BRANCH": null,
+            "RPC_RELEASE": null,
+            "RPC_PRODUCT_RELEASE": null,
+            "OS_ARTIFACT_SHA": null,
+            "PYTHON_ARTIFACT_SHA": null,
+            "APT_ARTIFACT_SHA": null,
+            "REPO_NAME": null,
+            "REPO_URL": null,
+            "GIT_URL": null,
+            "JOB_NAME": null,
+            "MOLECULE_TEST_REPO": null,
+            "MOLECULE_SCENARIO_NAME": null,
+            "PATH_TO_TEST_EXEC_DIR": null,
+            "MOLECULE_GIT_COMMIT": null,
+            "GIT_COMMIT": null
+          }
+        }
+        """
+    return config
+
+
+@pytest.fixture(scope='session')
+def mk8s_test_config():
+    """Provides a mk8s test config
+    """
+    config = \
+        """
+        {
+          "environment_variables": {
+            "BUILD_URL": null,
+            "BUILD_NUMBER": null,
+            "BUILD_ID": null,
+            "NODE_NAME": null,
+            "JOB_NAME": null,
+            "BUILD_TAG": null,
+            "JENKINS_URL": null,
+            "EXECUTOR_NUMBER": null,
+            "WORKSPACE": null,
+            "CVS_BRANCH": null,
+            "GIT_COMMIT": null,
+            "GIT_URL": null,
+            "GIT_BRANCH": null,
+            "GIT_LOCAL_BRANCH": null,
+            "GIT_AUTHOR_NAME": null,
+            "GIT_AUTHOR_EMAIL": null,
+            "BRANCH_NAME": null,
+            "CHANGE_AUTHOR_DISPLAY_NAME": null,
+            "CHANGE_AUTHOR": null,
+            "CHANGE_BRANCH": null,
+            "CHANGE_FORK": null,
+            "CHANGE_ID": null,
+            "CHANGE_TARGET": null,
+            "CHANGE_TITLE": null,
+            "CHANGE_URL": null,
+            "JOB_URL": null,
+            "NODE_LABELS": null,
+            "PATH_TO_TEST_EXEC_DIR": null,
+            "PWD": null,
+            "STAGE_NAME": null
+          }
+        }
+        """
+    return config
+
+
+@pytest.fixture(scope='session')
+def asc_test_config():
+    """Provides a mk8s test config
+    """
+    config = \
+        """
+        {
+          "environment_variables": {
+            "BUILD_URL": null,
+            "BUILD_NUMBER": null,
+            "RE_JOB_ACTION": null,
+            "RE_JOB_IMAGE": null,
+            "RE_JOB_SCENARIO": null,
+            "RE_JOB_BRANCH": null,
+            "RPC_RELEASE": null,
+            "RPC_PRODUCT_RELEASE": null,
+            "OS_ARTIFACT_SHA": null,
+            "PYTHON_ARTIFACT_SHA": null,
+            "APT_ARTIFACT_SHA": null,
+            "REPO_URL": null,
+            "JOB_NAME": null,
+            "MOLECULE_TEST_REPO": null,
+            "MOLECULE_SCENARIO_NAME": null,
+            "PATH_TO_TEST_EXEC_DIR": null,
+            "MOLECULE_GIT_COMMIT": null
+          }
+        }
+        """
+    return config

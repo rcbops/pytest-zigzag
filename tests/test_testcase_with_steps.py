@@ -6,13 +6,13 @@
 # Imports
 # ======================================================================================================================
 from __future__ import absolute_import
-from tests.conftest import run_and_parse, merge_dicts, is_sub_dict
+from tests.conftest import merge_dicts, is_sub_dict, run_and_parse_with_json_config
 
 
 # ======================================================================================================================
 # Tests
 # ======================================================================================================================
-def test_class_without_steps(testdir, properly_decorated_test_method):
+def test_class_without_steps(testdir, properly_decorated_test_method, simple_test_config):
     """Verify that decorating a pytest class with 'test_case_with_steps' mark will declare all test functions as steps
     which inherit the parent classes marks.
     """
@@ -27,7 +27,7 @@ def test_class_without_steps(testdir, properly_decorated_test_method):
                                                              test_id=test_id_exp,
                                                              jira_id=jira_id_exp))
 
-    junit_xml = run_and_parse(testdir)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
 
     # Test
     assert junit_xml.get_testcase_properties(test_name_exp)['test_step'] == 'false'
@@ -35,7 +35,7 @@ def test_class_without_steps(testdir, properly_decorated_test_method):
     assert junit_xml.get_testcase_properties(test_name_exp)['jira'] == jira_id_exp
 
 
-def test_improperly_decorated_class_without_steps(testdir, improperly_decorated_test_method):
+def test_improperly_decorated_class_without_steps(testdir, improperly_decorated_test_method, simple_test_config):
     """Verify that decorating a pytest class with 'test_case_with_steps' mark will declare all test functions as steps
     which inherit the parent classes marks.
     """
@@ -50,7 +50,7 @@ def test_improperly_decorated_class_without_steps(testdir, improperly_decorated_
                                                                test_id=test_id_exp,
                                                                jira_id=jira_id_exp))
 
-    junit_xml = run_and_parse(testdir)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
 
     # Test
     assert junit_xml.get_testcase_properties(test_name_exp)['test_step'] == 'false'
@@ -58,7 +58,7 @@ def test_improperly_decorated_class_without_steps(testdir, improperly_decorated_
     assert junit_xml.get_testcase_properties(test_name_exp)['jira'] == jira_id_exp
 
 
-def test_class_with_steps(testdir, properly_decorated_test_class_with_steps):
+def test_class_with_steps(testdir, properly_decorated_test_class_with_steps, simple_test_config):
     """Verify that decorating a pytest class with 'test_case_with_steps' mark will declare all test functions as steps
     which inherit the parent classes marks.
     """
@@ -74,7 +74,7 @@ def test_class_with_steps(testdir, properly_decorated_test_class_with_steps):
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse(testdir)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
 
     # Test
     for test_step in test_steps.values():
@@ -83,7 +83,7 @@ def test_class_with_steps(testdir, properly_decorated_test_class_with_steps):
         assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
 
 
-def test_class_with_steps_and_repeated_marks(testdir, improperly_decorated_test_class_with_steps):
+def test_class_with_steps_and_repeated_marks(testdir, improperly_decorated_test_class_with_steps, simple_test_config):
     """Verify that decorating a pytest class with 'test_case_with_steps' mark along with marking methods of said class
     with 'test_id' and 'jira' marks will result in test cases being marked with the PARENT classes 'test_id' and 'jira'
     marks.
@@ -103,7 +103,7 @@ def test_class_with_steps_and_repeated_marks(testdir, improperly_decorated_test_
     # Setup
     testdir.makepyfile(improperly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse(testdir)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
 
     # Test
     for test_step in test_steps.values():
@@ -112,7 +112,7 @@ def test_class_with_steps_and_repeated_marks(testdir, improperly_decorated_test_
         assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
 
 
-def test_class_with_failed_step(testdir, properly_decorated_test_class_with_step_failure):
+def test_class_with_failed_step(testdir, properly_decorated_test_class_with_step_failure, simple_test_config):
     """Verify that steps that follow a failing step will automatically skip."""
 
     # Expect
@@ -130,7 +130,7 @@ def test_class_with_failed_step(testdir, properly_decorated_test_class_with_step
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
@@ -141,7 +141,7 @@ def test_class_with_failed_step(testdir, properly_decorated_test_class_with_step
         assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
 
 
-def test_class_with_setup_steps(testdir, properly_decorated_test_class_with_step_failure):
+def test_class_with_setup_steps(testdir, properly_decorated_test_class_with_step_failure, simple_test_config):
     """Verify that steps with 'setup' in the name will always be ran regardless if previous steps failed."""
 
     # Expect
@@ -159,7 +159,7 @@ def test_class_with_setup_steps(testdir, properly_decorated_test_class_with_step
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
@@ -170,7 +170,7 @@ def test_class_with_setup_steps(testdir, properly_decorated_test_class_with_step
         assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
 
 
-def test_class_with_teardown_steps(testdir, properly_decorated_test_class_with_step_failure):
+def test_class_with_teardown_steps(testdir, properly_decorated_test_class_with_step_failure, simple_test_config):
     """Verify that steps with 'teardown' in the name will always be ran regardless if previous steps failed."""
 
     # Expect
@@ -188,7 +188,7 @@ def test_class_with_teardown_steps(testdir, properly_decorated_test_class_with_s
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
@@ -199,7 +199,9 @@ def test_class_with_teardown_steps(testdir, properly_decorated_test_class_with_s
         assert junit_xml.get_testcase_properties(test_step)['jira'] == tc_props_exps['jira_id']
 
 
-def test_class_with_setup_and_teardown_steps(testdir, properly_decorated_test_class_with_step_failure):
+def test_class_with_setup_and_teardown_steps(testdir,
+                                             properly_decorated_test_class_with_step_failure,
+                                             simple_test_config):
     """Verify that steps with 'setup' or 'teardown' in the name will always be ran regardless if previous steps failed.
     """
 
@@ -218,7 +220,7 @@ def test_class_with_setup_and_teardown_steps(testdir, properly_decorated_test_cl
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse(testdir, exit_code_exp=1)
+    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
