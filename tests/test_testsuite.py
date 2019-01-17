@@ -9,7 +9,7 @@ from __future__ import absolute_import
 import os
 # noinspection PyProtectedMember
 from pytest_zigzag import _load_config_file
-from tests.conftest import is_sub_dict, run_and_parse_with_json_config
+from tests.conftest import is_sub_dict, run_and_parse_with_config
 
 # ======================================================================================================================
 # Globals
@@ -27,7 +27,7 @@ def test_no_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_e
     # Setup
     testdir.makepyfile(undecorated_test_function.format(test_name='test_pass'))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
 
     # Test
     assert is_sub_dict(testsuite_attribs_exp, junit_xml.testsuite_attribs)
@@ -45,7 +45,7 @@ def test_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp,
     for env in ASC_TEST_ENV_VARS:
         os.environ[env] = env
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
 
     # Test
     assert is_sub_dict(testsuite_attribs_exp, junit_xml.testsuite_attribs)

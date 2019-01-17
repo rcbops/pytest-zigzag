@@ -6,7 +6,7 @@
 # Imports
 # ======================================================================================================================
 from __future__ import absolute_import
-from tests.conftest import merge_dicts, is_sub_dict, run_and_parse_with_json_config
+from tests.conftest import merge_dicts, is_sub_dict, run_and_parse_with_config
 
 
 # ======================================================================================================================
@@ -27,7 +27,7 @@ def test_class_without_steps(testdir, properly_decorated_test_method, simple_tes
                                                              test_id=test_id_exp,
                                                              jira_id=jira_id_exp))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
 
     # Test
     assert junit_xml.get_testcase_properties(test_name_exp)['test_step'] == 'false'
@@ -50,7 +50,7 @@ def test_improperly_decorated_class_without_steps(testdir, improperly_decorated_
                                                                test_id=test_id_exp,
                                                                jira_id=jira_id_exp))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
 
     # Test
     assert junit_xml.get_testcase_properties(test_name_exp)['test_step'] == 'false'
@@ -74,7 +74,7 @@ def test_class_with_steps(testdir, properly_decorated_test_class_with_steps, sim
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
 
     # Test
     for test_step in test_steps.values():
@@ -103,7 +103,7 @@ def test_class_with_steps_and_repeated_marks(testdir, improperly_decorated_test_
     # Setup
     testdir.makepyfile(improperly_decorated_test_class_with_steps.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
 
     # Test
     for test_step in test_steps.values():
@@ -130,7 +130,7 @@ def test_class_with_failed_step(testdir, properly_decorated_test_class_with_step
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
@@ -159,7 +159,7 @@ def test_class_with_setup_steps(testdir, properly_decorated_test_class_with_step
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
@@ -188,7 +188,7 @@ def test_class_with_teardown_steps(testdir, properly_decorated_test_class_with_s
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)
@@ -220,7 +220,7 @@ def test_class_with_setup_and_teardown_steps(testdir,
     # Setup
     testdir.makepyfile(properly_decorated_test_class_with_step_failure.format(**merge_dicts(test_steps, tc_props_exps)))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config, exit_code_exp=1)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config, exit_code_exp=1)[0]
 
     # Test
     assert is_sub_dict(ts_attribs_exps, junit_xml.testsuite_attribs)

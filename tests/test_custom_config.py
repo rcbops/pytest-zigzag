@@ -4,7 +4,7 @@
 # Imports
 # ======================================================================================================================
 from __future__ import absolute_import
-from tests.conftest import run_and_parse_with_json_config
+from tests.conftest import run_and_parse_with_config
 
 
 # ======================================================================================================================
@@ -23,7 +23,7 @@ def test_custom_config(testdir, single_decorated_test_function, simple_test_conf
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
 
-    junit_xml = run_and_parse_with_json_config(testdir, simple_test_config)[0]
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
 
     # Test
     assert junit_xml.testsuite_props
@@ -51,7 +51,7 @@ def test_custom_config_value(testdir, single_decorated_test_function):
         }
         """
 
-    junit_xml = run_and_parse_with_json_config(testdir, config)[0]
+    junit_xml = run_and_parse_with_config(testdir, config)[0]
 
     # Test
     assert junit_xml.testsuite_props['BUILD_URL'] == 'foo'
@@ -79,7 +79,7 @@ def test_malformed_custom_config(testdir, single_decorated_test_function):
         }
         """
 
-    result = run_and_parse_with_json_config(testdir, config, exit_code_exp=1)
+    result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
 
     # Test
     assert 'config file is not valid JSON' in result[1].stderr.lines[0]
@@ -109,7 +109,40 @@ def test_custom_properties_in_custom_config(testdir, single_decorated_test_funct
         }
         """
 
-    result = run_and_parse_with_json_config(testdir, config)
+    result = run_and_parse_with_config(testdir, config)
+
+    # Test
+    assert result[0].testsuite_props['FOO'] == 'foo'
+    assert result[0].testsuite_props['BAR'] == 'bar'
+
+
+def test_custom_config_precidence(testdir, single_decorated_test_function):
+    """Test that a custom config with non-standard parameters can be used."""
+
+    # Expect
+    mark_type_exp = 'test_id'
+    test_id_exp = '123e4567-e89b-12d3-a456-426655440000'
+    test_name_exp = 'test_uuid'
+
+    # Setup
+    testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
+                                                             mark_arg=test_id_exp,
+                                                             test_name=test_name_exp))
+    json_config = \
+        """
+        {
+          "environment_variables": {
+            "FOO": "foo",
+            "BAR": "bar",
+            "BUILD_URL": null,
+            "BUILD_NUMBER": null
+          }
+        }
+        """
+
+    ini_config = "[pytest]\n" 
+
+    result = run_and_parse_with_config(testdir, json_config, 0, None, ini_config)
 
     # Test
     assert result[0].testsuite_props['FOO'] == 'foo'
@@ -137,10 +170,11 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
         }
         """
 
-    result = run_and_parse_with_json_config(testdir, config, exit_code_exp=1)
+    result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
 
     # Test
-    assert "does not comply with schema: u'BUILD_URL' is a required property" in result[1].stderr.lines[0]
+    assert "does not comply with schema:" in result[1].stderr.lines[0]
+    assert "'BUILD_URL' is a required property" in result[1].stderr.lines[0]
 
     config = \
         """
@@ -151,7 +185,8 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
         }
         """
 
-    result = run_and_parse_with_json_config(testdir, config, exit_code_exp=1)
+    result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
 
     # Test
-    assert "does not comply with schema: u'BUILD_NUMBER' is a required property" in result[1].stderr.lines[0]
+    assert "does not comply with schema:" in result[1].stderr.lines[0]
+    assert "'BUILD_NUMBER' is a required property" in result[1].stderr.lines[0]
