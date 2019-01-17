@@ -64,7 +64,7 @@ def _capture_config_path(session):
             if _get_option_of_highest_precedence(session.config, 'config_file'):
                 highest_precedence = _get_option_of_highest_precedence(session.config, 'config_file')
             if not highest_precedence:
-                highest_precedence = "./pytest_zigzag/data/configs/default-config.json"
+                highest_precedence = resource_stream('pytest_zigzag', 'data/configs/default-config.json')
 
             # Load config
             config_dict = _load_config_file(highest_precedence)
