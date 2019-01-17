@@ -45,7 +45,7 @@ def _capture_marks(items, mark_names):
                     item.user_properties.append((marker.name, arg))
 
 
-def _capture_ci_environment(session):
+def _capture_config_path(session):
     """Capture the CI environment variables for the current session using the scheme specified by the user.
 
     Args:
@@ -61,8 +61,8 @@ def _capture_ci_environment(session):
             # Determine the config option that we should use
             if _get_option_of_highest_precedence(session.config, 'config_file'):
                 highest_precedence = _get_option_of_highest_precedence(session.config, 'config_file')
-            if _get_option_of_highest_precedence(session.config, 'pytest-config'):
-                highest_precedence = _get_option_of_highest_precedence(session.config, 'pytest-config')
+            if _get_option_of_highest_precedence(session.config, 'config_file'):
+                highest_precedence = _get_option_of_highest_precedence(session.config, 'config_file')
             if not highest_precedence:
                 highest_precedence = "./pytest_zigzag/data/configs/default-config.json"
 
@@ -119,7 +119,8 @@ def _load_config_file(config_file):
     """
 
     config_dict = {}
-    schema = loads(resource_stream('pytest_zigzag', 'data/schema/pytest-zigzag-config.schema.json').read().decode())
+    schema = loads(resource_stream('pytest_zigzag',
+                                   'data/schema/pytest-zigzag-config.schema.json').read().decode())
 
     try:
         with open(config_file, 'r') as f:
@@ -189,7 +190,7 @@ def pytest_runtestloop(session):
         junit_xml_config = getattr(session.config, '_xml', None)
 
         if junit_xml_config:
-            _capture_ci_environment(session)
+            _capture_config_path(session)
 
 
 def pytest_collection_modifyitems(items):
