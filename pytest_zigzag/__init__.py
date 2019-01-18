@@ -71,10 +71,13 @@ def _capture_config_path(session):
 
             # Record environment variables in JUnitXML global properties
 
-            for env_var in config_dict['environment_variables']:
-                junit_xml_config.add_global_property(env_var,
-                                                     os.getenv(env_var,
-                                                               config_dict['environment_variables'][env_var]))
+
+
+            for key in config_dict:
+                for val in config_dict[key]:
+                    junit_xml_config.add_global_property(val,
+                                                         os.getenv(val,
+                                                                   config_dict[key][val]))
 
 
 def _get_option_of_highest_precedence(config, option_name):

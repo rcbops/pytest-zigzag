@@ -1,7 +1,11 @@
 {
-  "environment_variables": {
+  "zigzag": {
+    "MODULE_HIERARCHY": []
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
     "BUILD_URL": null,
-    "MODULE_HIERARCHY": null,
     "BUILD_NUMBER": null,
     "RE_JOB_ACTION": null,
     "RE_JOB_IMAGE": null,
@@ -12,7 +16,6 @@
     "OS_ARTIFACT_SHA": null,
     "PYTHON_ARTIFACT_SHA": null,
     "APT_ARTIFACT_SHA": null,
-    "REPO_NAME": null,
     "REPO_URL": null,
     "GIT_URL": null,
     "JOB_NAME": null,

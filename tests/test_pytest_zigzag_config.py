@@ -75,7 +75,12 @@ def valid_json_file_with_job_name(tmpdir_factory):
     with open(str(config_path), 'w') as f:
         f.write("""
 {
-  "environment_variables": {
+  "zigzag": {
+    "MODULE_HIERARCHY": []
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
     "BUILD_URL": null,
     "BUILD_NUMBER": null,
     "RE_JOB_ACTION": null,
@@ -88,10 +93,13 @@ def valid_json_file_with_job_name(tmpdir_factory):
     "PYTHON_ARTIFACT_SHA": null,
     "APT_ARTIFACT_SHA": null,
     "REPO_URL": null,
+    "GIT_URL": null,
     "JOB_NAME": "foo",
     "MOLECULE_TEST_REPO": null,
     "MOLECULE_SCENARIO_NAME": null,
-    "MOLECULE_GIT_COMMIT": null
+    "PATH_TO_TEST_EXEC_DIR": null,
+    "MOLECULE_GIT_COMMIT": null,
+    "GIT_COMMIT": null
   }
 }
                 """)
@@ -157,7 +165,7 @@ def test_valid_json_config_file_string(valid_json_file_with_job_name):
     # Test
     config_dict = _load_config_file(valid_json_file_with_job_name)
 
-    assert config_dict['environment_variables']['JOB_NAME'] == "foo"
+    assert config_dict['pytest_zigzag_env_vars']['JOB_NAME'] == "foo"
 
 
 def test_invalid_config_file_path():
