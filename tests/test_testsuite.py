@@ -15,13 +15,13 @@ from tests.conftest import is_sub_dict, run_and_parse_with_config, build_propert
 # Globals
 # ======================================================================================================================
 config_file = './pytest_zigzag/data/configs/default-config.json'
-#ASC_TEST_ENV_VARS = list(_load_config_file(config_file)['pytest_zigzag_env_vars'])      # Shallow copy.
-ASC_TEST_ENV_VARS = build_property_list(_load_config_file(config_file)) # Shallow copy.
-
+ASC_TEST_ENV_VARS = build_property_list(_load_config_file(config_file))  # Shallow copy.
 
 # ======================================================================================================================
 # Tests
 # ======================================================================================================================
+
+
 def test_no_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp, simple_test_config):
     """Verify that pytest accepts our fixture without setting any environment variables."""
 
