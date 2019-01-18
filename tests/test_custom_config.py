@@ -42,14 +42,19 @@ def test_custom_config_value(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-        """
-        {
-          "environment_variables": {
-            "BUILD_URL": "foo",
-            "BUILD_NUMBER": null
-          }
-        }
-        """
+"""
+{
+  "zigzag": {
+    "MODULE_HIERARCHY": ["baz"]
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": "foo",
+    "BUILD_NUMBER": null
+  }
+}
+""" # noqa
 
     junit_xml = run_and_parse_with_config(testdir, config)[0]
 
@@ -70,14 +75,19 @@ def test_malformed_custom_config(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-        """
-        {
-          "environment_variables": {
-            "BUILD_URL": "foo",
-            "BUILD_NUMBER": null,
-          }
-        }
-        """
+"""
+{
+  "zigzag": {
+    "MODULE_HIERARCHY": []
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": "foo",
+    "BUILD_NUMBER": null,
+  }
+}
+""" # noqa
 
     result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
 
@@ -98,16 +108,21 @@ def test_custom_properties_in_custom_config(testdir, single_decorated_test_funct
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-        """
-        {
-          "environment_variables": {
-            "FOO": "foo",
-            "BAR": "bar",
-            "BUILD_URL": null,
-            "BUILD_NUMBER": null
-          }
-        }
-        """
+"""
+{
+  "zigzag": {
+    "MODULE_HIERARCHY": []
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
+    "FOO": "foo",
+    "BAR": "bar",
+    "BUILD_URL": "foo",
+    "BUILD_NUMBER": null
+  }
+}
+""" # noqa
 
     result = run_and_parse_with_config(testdir, config)
 
@@ -129,18 +144,23 @@ def test_custom_config_precidence(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     json_config = \
-        """
-        {
-          "environment_variables": {
-            "FOO": "foo",
-            "BAR": "bar",
-            "BUILD_URL": null,
-            "BUILD_NUMBER": null
-          }
-        }
-        """
+"""
+{
+  "zigzag": {
+    "MODULE_HIERARCHY": []
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
+    "FOO": "foo",
+    "BAR": "bar",
+    "BUILD_URL": "foo",
+    "BUILD_NUMBER": null
+  }
+}
+""" # noqa
 
-    ini_config = "[pytest]\n" 
+    ini_config = "[pytest]\n"
 
     result = run_and_parse_with_config(testdir, json_config, 0, None, ini_config)
 
@@ -162,13 +182,18 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     config = \
-        """
-        {
-          "environment_variables": {
-            "BUILD_NUMBER": null
-          }
-        }
-        """
+"""
+{
+  "zigzag": {
+    "MODULE_HIERARCHY": []
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
+    "BUILD_NUMBER": null
+  }
+}
+""" # noqa
 
     result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
 
@@ -177,13 +202,18 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
     assert "'BUILD_URL' is a required property" in result[1].stderr.lines[0]
 
     config = \
-        """
-        {
-          "environment_variables": {
-            "BUILD_URL": null
-          }
-        }
-        """
+"""
+{
+  "zigzag": {
+    "MODULE_HIERARCHY": []
+  },
+  "tempest_zigzag": {
+  },
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": null
+  }
+}
+""" # noqa
 
     result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
 

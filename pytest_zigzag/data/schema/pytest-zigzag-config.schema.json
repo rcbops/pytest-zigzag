@@ -3,16 +3,25 @@
   "title": "pytest-zigzag-config",
   "description": "A JSON schema for pytest-zigzag configuration files.",
   "type": "object",
-  "required": ["environment_variables"],
+  "required": ["zigzag", "pytest_zigzag_env_vars"],
   "properties": {
-    "environment_variables": {
+    "zigzag": {
+      "description": "An object to store zigzag/qtest specific config data.",
+      "type": "object",
+      "properties": {
+        "MODULE_HIERARCHY": {"type": ["array", "null"]}
+      },
+      "required": ["MODULE_HIERARCHY"],
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "pytest_zigzag_env_vars": {
       "description": "A white list of environment variables to extract and include in the JUnitXML global properties.",
       "type": "object",
       "properties": {
         "BUILD_URL": {"type": ["string", "null"]},
         "BUILD_NUMBER": {"type": ["number", "null"]},
         "BUILD_ID": {"type": ["string", "null"] },
-        "MODULE_HIERARCHY": {"type": ["array", "null"] },
         "NODE_NAME": {"type": ["string", "null"] },
         "JOB_NAME": {"type": ["string", "null"] },
         "BUILD_TAG": {"type": ["string", "null"] },

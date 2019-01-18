@@ -9,13 +9,14 @@ from __future__ import absolute_import
 import os
 # noinspection PyProtectedMember
 from pytest_zigzag import _load_config_file
-from tests.conftest import is_sub_dict, run_and_parse_with_config
+from tests.conftest import is_sub_dict, run_and_parse_with_config, build_property_list
 
 # ======================================================================================================================
 # Globals
 # ======================================================================================================================
 config_file = './pytest_zigzag/data/configs/default-config.json'
-ASC_TEST_ENV_VARS = list(_load_config_file(config_file)['environment_variables'])      # Shallow copy.
+#ASC_TEST_ENV_VARS = list(_load_config_file(config_file)['pytest_zigzag_env_vars'])      # Shallow copy.
+ASC_TEST_ENV_VARS = build_property_list(_load_config_file(config_file)) # Shallow copy.
 
 
 # ======================================================================================================================
@@ -33,7 +34,7 @@ def test_no_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_e
     assert is_sub_dict(testsuite_attribs_exp, junit_xml.testsuite_attribs)
 
     for env_var in ASC_TEST_ENV_VARS:
-        assert junit_xml.testsuite_props[env_var] == 'None'
+        assert junit_xml.testsuite_props[env_var] == 'None' or '[]'
 
 
 def test_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp, simple_test_config):
