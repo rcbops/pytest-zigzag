@@ -70,9 +70,6 @@ def _capture_config_path(session):
             config_dict = _load_config_file(highest_precedence)
 
             # Record environment variables in JUnitXML global properties
-
-
-
             for key in config_dict:
                 for val in config_dict[key]:
                     junit_xml_config.add_global_property(val,

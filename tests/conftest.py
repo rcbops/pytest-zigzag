@@ -137,7 +137,7 @@ def build_property_list(config_dict):
     """
     props = {}
     for root_key in config_dict:
-        if not config_dict[root_key] == None:
+        if not config_dict[root_key] is None:
             for key in config_dict[root_key]:
                 props[key] = config_dict[root_key][key]
     return props
