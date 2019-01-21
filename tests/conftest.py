@@ -508,11 +508,6 @@ def simple_test_config():
     config = \
 """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_URL": null,
     "BUILD_NUMBER": null,
@@ -546,11 +541,6 @@ def mk8s_test_config():
     config = \
         """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_URL": null,
     "BUILD_NUMBER": null,
@@ -596,11 +586,6 @@ def asc_test_config():
     config = \
         """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_URL": null,
     "BUILD_NUMBER": null,

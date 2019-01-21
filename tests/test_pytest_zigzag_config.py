@@ -75,11 +75,6 @@ def valid_json_file_with_job_name(tmpdir_factory):
     with open(str(config_path), 'w') as f:
         f.write("""
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_URL": null,
     "BUILD_NUMBER": null,

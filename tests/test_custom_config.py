@@ -44,11 +44,6 @@ def test_custom_config_value(testdir, single_decorated_test_function):
     config = \
 """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": ["baz"]
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_URL": "foo",
     "BUILD_NUMBER": null
@@ -77,11 +72,6 @@ def test_malformed_custom_config(testdir, single_decorated_test_function):
     config = \
 """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_URL": "foo",
     "BUILD_NUMBER": null,
@@ -110,11 +100,6 @@ def test_custom_properties_in_custom_config(testdir, single_decorated_test_funct
     config = \
 """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "FOO": "foo",
     "BAR": "bar",
@@ -146,11 +131,6 @@ def test_custom_config_precidence(testdir, single_decorated_test_function):
     json_config = \
 """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "FOO": "foo",
     "BAR": "bar",
@@ -184,11 +164,6 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
     config = \
 """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_NUMBER": null
   }
@@ -204,11 +179,6 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
     config = \
 """
 {
-  "zigzag": {
-    "MODULE_HIERARCHY": []
-  },
-  "tempest_zigzag": {
-  },
   "pytest_zigzag_env_vars": {
     "BUILD_URL": null
   }

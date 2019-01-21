@@ -52,4 +52,15 @@ def test_env_vars_set(testdir, undecorated_test_function, testsuite_attribs_exp,
     assert is_sub_dict(testsuite_attribs_exp, junit_xml.testsuite_attribs)
 
     expected = {env: env for env in ASC_TEST_ENV_VARS}
+
+    props = junit_xml.testsuite_props
+    missingx = []
+    missingy = []
+    for x in expected:
+        if x not in props:
+            missingx.append(x)
+    for y in props:
+        if y not in expected:
+            missingy.append(y)
+
     assert junit_xml.testsuite_props == expected
