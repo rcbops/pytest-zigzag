@@ -155,7 +155,8 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=N
         ini_config (str): The contents of the pytest ini config that you want to use. (Default=None)
 
     Returns:
-        JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.
+        tuple: [(JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.),
+                (the pytest result object)]
     """
 
     runpytest_args = [] if not runpytest_args else runpytest_args
