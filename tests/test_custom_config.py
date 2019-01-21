@@ -4,6 +4,7 @@
 # Imports
 # ======================================================================================================================
 from __future__ import absolute_import
+import os
 from tests.conftest import run_and_parse_with_config
 
 
@@ -27,6 +28,37 @@ def test_custom_config(testdir, single_decorated_test_function, simple_test_conf
 
     # Test
     assert junit_xml.testsuite_props
+
+
+def test_config_value_overrides(testdir, single_decorated_test_function):
+    """Ensure that a value set as an environment var will override a value in the config file."""
+
+    # Expect
+    mark_type_exp = 'test_id'
+    test_id_exp = '123e4567-e89b-12d3-a456-426655440000'
+    test_name_exp = 'test_uuid'
+
+    # Setup
+    testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
+                                                             mark_arg=test_id_exp,
+                                                             test_name=test_name_exp))
+    os.environ["BUILD_URL"] = "bar"
+
+    config = \
+"""
+{
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": "foo",
+    "BUILD_NUMBER": null
+  }
+}
+""" # noqa
+
+    junit_xml = run_and_parse_with_config(testdir, config)[0]
+
+    # Test
+    assert junit_xml.testsuite_props['BUILD_URL'] == 'bar'
+    del os.environ['BUILD_URL']
 
 
 def test_custom_config_value(testdir, single_decorated_test_function):
