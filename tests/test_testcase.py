@@ -230,7 +230,7 @@ def test_accurate_test_time(testdir, sleepy_test_function, simple_test_config):
 
 
 @pytest.mark.skipif('SKIP_LONG_RUNNING_TESTS' in os.environ, reason='Impatient developer is impatient')
-def test_failure_in_setup_fixture(testdir, failure_in_test_setup):
+def test_failure_in_setup_fixture(testdir, failure_in_test_setup, simple_test_config):
     """Verify that we still get start and end time if test fails setup fixture"""
 
     # Expect
@@ -239,7 +239,7 @@ def test_failure_in_setup_fixture(testdir, failure_in_test_setup):
     # Setup
     testdir.makepyfile(failure_in_test_setup.format(test_name=test_name_exp))
 
-    junit_xml = run_and_parse(testdir, 1)
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config, 1)[0]
 
     try:
         date_parser.parse(str(junit_xml.get_testcase_property(test_name_exp, 'start_time')[0]))
@@ -249,7 +249,7 @@ def test_failure_in_setup_fixture(testdir, failure_in_test_setup):
 
 
 @pytest.mark.skipif('SKIP_LONG_RUNNING_TESTS' in os.environ, reason='Impatient developer is impatient')
-def test_failure_in_teardown_fixture(testdir, failure_in_test_teardown):
+def test_failure_in_teardown_fixture(testdir, failure_in_test_teardown, simple_test_config):
     """Verify that we still get start and end time if test fails teardown fixture"""
 
     # Expect
@@ -258,7 +258,7 @@ def test_failure_in_teardown_fixture(testdir, failure_in_test_teardown):
     # Setup
     testdir.makepyfile(failure_in_test_teardown.format(test_name=test_name_exp))
 
-    junit_xml = run_and_parse(testdir, 1)
+    junit_xml = run_and_parse_with_config(testdir, simple_test_config, 1)[0]
 
     try:
         date_parser.parse(str(junit_xml.get_testcase_property(test_name_exp, 'start_time')[0]))
