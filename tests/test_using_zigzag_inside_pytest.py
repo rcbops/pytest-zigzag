@@ -29,7 +29,7 @@ def test_zigzag_happy_path(testdir, single_decorated_test_function, mocker):
 
     result = testdir.runpytest(
         "--junitxml={}".format(result_path),
-        "--ci-environment=mk8s",
+        "--config_file=./pytest_zigzag/data/configs/default-config.json",
         "--zigzag",
         "--qtest-project-id={}".format(project_id))
 
@@ -56,7 +56,7 @@ def test_zigzag_no_api_token(testdir, single_decorated_test_function, mocker):
 
     result = testdir.runpytest(
         "--junitxml={}".format(result_path),
-        "--ci-environment=mk8s",
+        "--config_file=./pytest_zigzag/data/configs/default-config.json",
         "--zigzag",
         "--qtest-project-id={}".format(project_id))
 
@@ -86,7 +86,7 @@ def test_zigzag_no_project_id(testdir, single_decorated_test_function, mocker):
 
     result = testdir.runpytest(
         "--junitxml={}".format(result_path),
-        "--ci-environment=mk8s",
+        "--config_file=./pytest_zigzag/data/configs/default-config.json",
         "--zigzag")
 
     # Test
@@ -112,7 +112,7 @@ def test_no_zigzag(testdir, single_decorated_test_function, mocker):
 
     result = testdir.runpytest(
         "--junitxml={}".format(result_path),
-        "--ci-environment=mk8s",
+        "--config_file=./pytest_zigzag/data/configs/default-config.json",
         "--qtest-project-id={}".format(project_id))
 
     # Test

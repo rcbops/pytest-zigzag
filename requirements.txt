@@ -2,6 +2,7 @@
 bumpversion
 flake8
 ipython
+jsonschema
 lxml
 python-dateutil
 pytest

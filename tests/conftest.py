@@ -125,7 +125,25 @@ def run_and_parse(testdir, exit_code_exp=0, runpytest_args=None):
     return junit_xml_doc
 
 
-def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=None):
+def build_property_list(config_dict):
+    """ Build a list of properties and values that will end up in junit xml. This should only
+        be used for testing purposes to set expectations.
+
+    Args:
+        config_dict: a python object representation of pytest_zigzag config json
+
+    Returns:
+        props: a flattened dictionary of properties and values
+    """
+    props = {}
+    for root_key in config_dict:
+        if not config_dict[root_key] is None:
+            for key in config_dict[root_key]:
+                props[key] = config_dict[root_key][key]
+    return props
+
+
+def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=None, ini_config=None):
     """Execute a pytest run against a directory containing pytest Python files.
 
     Args:
@@ -134,24 +152,44 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=N
         exit_code_exp (int): The expected exit code for pytest run. (Default = 0)
         runpytest_args (list(object)): A list of positional arguments to pass into the "testdir" fixture.
             (Default = [])
+        ini_config (str): The contents of the pytest ini config that you want to use. (Default=None)
 
     Returns:
-        JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.
+        tuple: [(JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.),
+                (the pytest result object)]
     """
 
     runpytest_args = [] if not runpytest_args else runpytest_args
     result_path = testdir.tmpdir.join('junit.xml')
-    config_path = testdir.tmpdir.join('conf.conf')
+    config_path = None
+    result = None
     with open(str(config_path), 'w') as f:
         f.write(config)
-
-    result = testdir.runpytest("--junitxml={}".format(result_path), "-c={}".format(config_path), *runpytest_args)
+    if ini_config:
+        config_path = testdir.tmpdir.join('conf.json')
+        with open(str(config_path), 'w') as f:
+            f.write(config)
+        ini_config_path = testdir.tmpdir.join('pytest.ini')
+        # add config path here to match the config file we're about to lay down
+        ini_config = ini_config + "config_file=" + str(config_path)
+        with open(str(ini_config_path), 'w') as f:
+            f.write(ini_config)
+        result = testdir.runpytest("--junitxml={}".format(result_path),
+                                   "--pytest-config={}".format(ini_config_path),
+                                   *runpytest_args)
+    else:
+        config_path = testdir.tmpdir.join('conf.json')
+        with open(str(config_path), 'w') as f:
+            f.write(config)
+        result = testdir.runpytest("--junitxml={}".format(result_path),
+                                   "--config_file={}".format(config_path),
+                                   *runpytest_args)
 
     assert result.ret == exit_code_exp
 
     junit_xml_doc = JunitXml(str(result_path))
 
-    return junit_xml_doc
+    return (junit_xml_doc, result)
 
 
 def merge_dicts(*args):
@@ -462,3 +500,114 @@ def failure_in_test_teardown():
         """
 
     return py_file
+
+
+@pytest.fixture(scope='session')
+def simple_test_config():
+    """Provides a simple test config
+    """
+    config = \
+"""
+{
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": null,
+    "BUILD_NUMBER": null,
+    "RE_JOB_ACTION": null,
+    "RE_JOB_IMAGE": null,
+    "RE_JOB_SCENARIO": null,
+    "RE_JOB_BRANCH": null,
+    "RPC_RELEASE": null,
+    "RPC_PRODUCT_RELEASE": null,
+    "OS_ARTIFACT_SHA": null,
+    "PYTHON_ARTIFACT_SHA": null,
+    "APT_ARTIFACT_SHA": null,
+    "REPO_URL": null,
+    "GIT_URL": null,
+    "JOB_NAME": null,
+    "MOLECULE_TEST_REPO": null,
+    "MOLECULE_SCENARIO_NAME": null,
+    "PATH_TO_TEST_EXEC_DIR": null,
+    "MOLECULE_GIT_COMMIT": null,
+    "GIT_COMMIT": null
+  }
+}
+""" # noqa
+    return config
+
+
+@pytest.fixture(scope='session')
+def mk8s_test_config():
+    """Provides a mk8s test config
+    """
+    config = \
+        """
+{
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": null,
+    "BUILD_NUMBER": null,
+    "BUILD_ID": null,
+    "NODE_NAME": null,
+    "JOB_NAME": null,
+    "BUILD_TAG": null,
+    "JENKINS_URL": null,
+    "EXECUTOR_NUMBER": null,
+    "WORKSPACE": null,
+    "CVS_BRANCH": null,
+    "GIT_COMMIT": null,
+    "GIT_URL": null,
+    "GIT_BRANCH": null,
+    "GIT_LOCAL_BRANCH": null,
+    "GIT_AUTHOR_NAME": null,
+    "GIT_AUTHOR_EMAIL": null,
+    "BRANCH_NAME": null,
+    "CHANGE_AUTHOR_DISPLAY_NAME": null,
+    "CHANGE_AUTHOR": null,
+    "CHANGE_BRANCH": null,
+    "CHANGE_FORK": null,
+    "CHANGE_ID": null,
+    "CHANGE_TARGET": null,
+    "CHANGE_TITLE": null,
+    "CHANGE_URL": null,
+    "JOB_URL": null,
+    "NODE_LABELS": null,
+    "PATH_TO_TEST_EXEC_DIR": null,
+    "PWD": null,
+    "STAGE_NAME": null
+  }
+}
+""" # noqa
+
+    return config
+
+
+@pytest.fixture(scope='session')
+def asc_test_config():
+    """Provides a mk8s test config
+    """
+    config = \
+        """
+{
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": null,
+    "BUILD_NUMBER": null,
+    "RE_JOB_ACTION": null,
+    "RE_JOB_IMAGE": null,
+    "RE_JOB_SCENARIO": null,
+    "RE_JOB_BRANCH": null,
+    "RPC_RELEASE": null,
+    "RPC_PRODUCT_RELEASE": null,
+    "OS_ARTIFACT_SHA": null,
+    "PYTHON_ARTIFACT_SHA": null,
+    "APT_ARTIFACT_SHA": null,
+    "REPO_URL": null,
+    "GIT_URL": null,
+    "JOB_NAME": null,
+    "MOLECULE_TEST_REPO": null,
+    "MOLECULE_SCENARIO_NAME": null,
+    "PATH_TO_TEST_EXEC_DIR": null,
+    "MOLECULE_GIT_COMMIT": null,
+    "GIT_COMMIT": null
+  }
+}
+""" # noqa
+    return config

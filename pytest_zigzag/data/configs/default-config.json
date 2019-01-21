@@ -1,0 +1,23 @@
+{
+  "pytest_zigzag_env_vars": {
+    "BUILD_URL": null,
+    "BUILD_NUMBER": null,
+    "RE_JOB_ACTION": null,
+    "RE_JOB_IMAGE": null,
+    "RE_JOB_SCENARIO": null,
+    "RE_JOB_BRANCH": null,
+    "RPC_RELEASE": null,
+    "RPC_PRODUCT_RELEASE": null,
+    "OS_ARTIFACT_SHA": null,
+    "PYTHON_ARTIFACT_SHA": null,
+    "APT_ARTIFACT_SHA": null,
+    "REPO_URL": null,
+    "GIT_URL": null,
+    "JOB_NAME": null,
+    "MOLECULE_TEST_REPO": null,
+    "MOLECULE_SCENARIO_NAME": null,
+    "PATH_TO_TEST_EXEC_DIR": null,
+    "MOLECULE_GIT_COMMIT": null,
+    "GIT_COMMIT": null
+  }
+}
