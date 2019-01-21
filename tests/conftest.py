@@ -189,7 +189,7 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=N
 
     junit_xml_doc = JunitXml(str(result_path))
 
-    return [junit_xml_doc, result]
+    return (junit_xml_doc, result)
 
 
 def merge_dicts(*args):

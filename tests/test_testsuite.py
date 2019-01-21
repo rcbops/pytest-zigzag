@@ -9,13 +9,14 @@ from __future__ import absolute_import
 import os
 # noinspection PyProtectedMember
 from pytest_zigzag import _load_config_file
+from pkg_resources import resource_stream
 from tests.conftest import is_sub_dict, run_and_parse_with_config, build_property_list
 
 # ======================================================================================================================
 # Globals
 # ======================================================================================================================
-config_file = './pytest_zigzag/data/configs/default-config.json'
-ASC_TEST_ENV_VARS = build_property_list(_load_config_file(config_file))  # Shallow copy.
+config_file_path = resource_stream('pytest_zigzag', 'data/configs/default-config.json').name
+ASC_TEST_ENV_VARS = build_property_list(_load_config_file(config_file_path))  # Shallow copy.
 
 # ======================================================================================================================
 # Tests
