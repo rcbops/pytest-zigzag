@@ -38,20 +38,22 @@ run fetched from the local environment.
 Configuration
 ^^^^^^^^^^^^^
 
-You can configure this plugin to tell it which 'ci-environment' you are using when you execute this test.  This will let
-pytest-zigzag know what information to collect inside of the junit.xml.  If no configuration is found it will assume
-that you are using asc.
+You can supply a json config to this plugin containing a dictionary. Each key / value will become a property name and
+value on the test suite node of the resulting xml. There are two required config properties: BUILD_URL and BUILD_NUMBER.
+These can have null values, but they must exist.
 
-1. You can configure in an ini file that is readable by pytest (setup.cfg, pytest.ini, tox.ini)::
+The location of the config file can be specified in two ways:
+
+1. In a pytest ini file::
 
     [pytest]
-    ci-environment=mk8s
+    config_file=/path/to/config/file
 
-2. You can configure via the command line::
+2. Explicitly on the command line::
 
-    pytest /path/to/test_test.py --ci-environment=asc
+    pytest /path/to/test_test.py --config_file=/path/to/config/file
 
-3. The current available options are 'asc' & 'mk8s'
+Any property defined in the config file can be overriden by creating an environment variable of the same name. see this `config_property_overrides.md`_
 
 Contributing
 ------------
@@ -70,6 +72,7 @@ This `Pytest`_ plugin was generated with `Cookiecutter`_ along with `@hackebrot`
 
 .. _CONTRIBUTING.rst: CONTRIBUTING.rst
 .. _release_process.rst: docs/release_process.rst
+.. _config_property_overrides.md: docs/config_property_overrides.md
 .. _`Cookiecutter`: https://github.com/audreyr/cookiecutter
 .. _`@hackebrot`: https://github.com/hackebrot
 .. _`MIT`: http://opensource.org/licenses/MIT
