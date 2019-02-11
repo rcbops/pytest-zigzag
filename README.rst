@@ -40,7 +40,7 @@ Configuration
 
 You can supply a json config to this plugin containing a dictionary. Each key / value will become a property name and
 value on the test suite node of the resulting xml. There is one required config: pytest_zigzag_env_vars.
-This should be a json object that that where the keys are the environment variable names to be collected, if you set
+This should be a json object where the keys are the environment variable names to be collected, if you set
 value to a string that value will be used.  If the value is null it will be pulled from the environment.
 
 The location of the config file can be specified in two ways:
