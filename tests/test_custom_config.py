@@ -196,7 +196,7 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
     config = \
 """
 {
-  "pytest_zigzag_env_vars": {
+  "not_pytest_zigzag_env_vars": {
     "BUILD_NUMBER": null
   }
 }
@@ -206,19 +206,4 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
 
     # Test
     assert "does not comply with schema:" in result[1].stderr.lines[0]
-    assert "'BUILD_URL' is a required property" in result[1].stderr.lines[0]
-
-    config = \
-"""
-{
-  "pytest_zigzag_env_vars": {
-    "BUILD_URL": null
-  }
-}
-""" # noqa
-
-    result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
-
-    # Test
-    assert "does not comply with schema:" in result[1].stderr.lines[0]
-    assert "'BUILD_NUMBER' is a required property" in result[1].stderr.lines[0]
+    assert "'pytest_zigzag_env_vars' is a required property" in result[1].stderr.lines[0]
