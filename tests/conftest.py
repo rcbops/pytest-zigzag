@@ -161,14 +161,11 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=N
 
     runpytest_args = [] if not runpytest_args else runpytest_args
     result_path = testdir.tmpdir.join('junit.xml')
-    config_path = None
+    config_path = testdir.tmpdir.join('conf.json')
     result = None
     with open(str(config_path), 'w') as f:
         f.write(config)
     if ini_config:
-        config_path = testdir.tmpdir.join('conf.json')
-        with open(str(config_path), 'w') as f:
-            f.write(config)
         ini_config_path = testdir.tmpdir.join('pytest.ini')
         # add config path here to match the config file we're about to lay down
         ini_config = ini_config + "config_file=" + str(config_path)
