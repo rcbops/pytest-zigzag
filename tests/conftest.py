@@ -111,7 +111,8 @@ def run_and_parse(testdir, exit_code_exp=0, runpytest_args=None):
             (Default = [])
 
     Returns:
-        JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.
+        tuple: [(JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.),
+                (the pytest result object)]
     """
 
     runpytest_args = [] if not runpytest_args else runpytest_args
@@ -122,7 +123,7 @@ def run_and_parse(testdir, exit_code_exp=0, runpytest_args=None):
 
     junit_xml_doc = JunitXml(str(result_path))
 
-    return junit_xml_doc
+    return (junit_xml_doc, result)
 
 
 def build_property_list(config_dict):
@@ -143,17 +144,14 @@ def build_property_list(config_dict):
     return props
 
 
-def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=None, ini_config=None):
+def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=None):
     """Execute a pytest run against a directory containing pytest Python files.
-
     Args:
         testdir (_pytest.pytester.TestDir): A pytest fixture for testing pytest plug-ins.
-        config (str): The contents of the config that you want to use.
+        config (str): The contents of the pytest.ini config that you want to use.
         exit_code_exp (int): The expected exit code for pytest run. (Default = 0)
         runpytest_args (list(object)): A list of positional arguments to pass into the "testdir" fixture.
             (Default = [])
-        ini_config (str): The contents of the pytest ini config that you want to use. (Default=None)
-
     Returns:
         tuple: [(JunitXml: A wrapper class for the etree element at the root of the supplied JUnitXML file.),
                 (the pytest result object)]
@@ -161,26 +159,11 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=N
 
     runpytest_args = [] if not runpytest_args else runpytest_args
     result_path = testdir.tmpdir.join('junit.xml')
-    config_path = testdir.tmpdir.join('conf.json')
-    result = None
+    config_path = testdir.tmpdir.join('conf.conf')
     with open(str(config_path), 'w') as f:
         f.write(config)
-    if ini_config:
-        ini_config_path = testdir.tmpdir.join('pytest.ini')
-        # add config path here to match the config file we're about to lay down
-        ini_config = ini_config + "config_file=" + str(config_path)
-        with open(str(ini_config_path), 'w') as f:
-            f.write(ini_config)
-        result = testdir.runpytest("--junitxml={}".format(result_path),
-                                   "--pytest-config={}".format(ini_config_path),
-                                   *runpytest_args)
-    else:
-        config_path = testdir.tmpdir.join('conf.json')
-        with open(str(config_path), 'w') as f:
-            f.write(config)
-        result = testdir.runpytest("--junitxml={}".format(result_path),
-                                   "--config_file={}".format(config_path),
-                                   *runpytest_args)
+
+    result = testdir.runpytest("--junitxml={}".format(result_path), "-c={}".format(config_path), *runpytest_args)
 
     assert result.ret == exit_code_exp
 
@@ -500,9 +483,14 @@ def failure_in_test_teardown():
 
 
 @pytest.fixture(scope='session')
-def simple_test_config():
+def simple_test_config(tmpdir_factory):
     """Provides a simple test config
+
+    Returns:
+        str: the path to a json config file
     """
+
+    filename = tmpdir_factory.mktemp('data').join('config.json').strpath
     config = \
 """
 {
@@ -528,14 +516,23 @@ def simple_test_config():
     "GIT_COMMIT": null
   }
 }
-""" # noqa
-    return config
+"""  # noqa
+
+    with open(filename, 'w') as f:
+        f.write(config)
+
+    return filename
 
 
 @pytest.fixture(scope='session')
-def mk8s_test_config():
+def mk8s_test_config(tmpdir_factory):
     """Provides a mk8s test config
+
+    Returns:
+        str: the path to a json config file
     """
+
+    filename = tmpdir_factory.mktemp('data').join('mk8s_config.json').strpath
     config = \
         """
 {
@@ -572,15 +569,23 @@ def mk8s_test_config():
     "STAGE_NAME": null
   }
 }
-""" # noqa
+"""  # noqa
 
-    return config
+    with open(filename, 'w') as f:
+        f.write(config)
+
+    return filename
 
 
 @pytest.fixture(scope='session')
-def asc_test_config():
+def asc_test_config(tmpdir_factory):
     """Provides a mk8s test config
+
+    Returns:
+        str: the path to a json config file
     """
+
+    filename = tmpdir_factory.mktemp('data').join('mk8s_config.json').strpath
     config = \
         """
 {
@@ -606,5 +611,9 @@ def asc_test_config():
     "GIT_COMMIT": null
   }
 }
-""" # noqa
-    return config
+"""  # noqa
+
+    with open(filename, 'w') as f:
+        f.write(config)
+
+    return filename

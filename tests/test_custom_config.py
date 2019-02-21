@@ -5,7 +5,7 @@
 # ======================================================================================================================
 from __future__ import absolute_import
 import os
-from tests.conftest import run_and_parse_with_config
+from tests.conftest import run_and_parse, run_and_parse_with_config
 
 
 # ======================================================================================================================
@@ -23,14 +23,14 @@ def test_custom_config(testdir, single_decorated_test_function, simple_test_conf
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
-
-    junit_xml = run_and_parse_with_config(testdir, simple_test_config)[0]
+    args = ["--pytest-zigzag-config", simple_test_config]
+    junit_xml = run_and_parse(testdir, 0, args)[0]
 
     # Test
     assert junit_xml.testsuite_props
 
 
-def test_config_value_overrides(testdir, single_decorated_test_function):
+def test_config_value_overrides(testdir, single_decorated_test_function, tmpdir_factory):
     """Ensure that a value set as an environment var will override a value in the config file."""
 
     # Expect
@@ -43,6 +43,7 @@ def test_config_value_overrides(testdir, single_decorated_test_function):
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
     os.environ["BUILD_URL"] = "bar"
+    config_path = tmpdir_factory.mktemp('data').join('config.json').strpath
 
     config = \
 """
@@ -52,16 +53,20 @@ def test_config_value_overrides(testdir, single_decorated_test_function):
     "BUILD_NUMBER": null
   }
 }
-""" # noqa
+"""  # noqa
 
-    junit_xml = run_and_parse_with_config(testdir, config)[0]
+    with open(config_path, 'w') as f:
+        f.write(config)
+
+    args = ["--pytest-zigzag-config", config_path]
+    junit_xml = run_and_parse(testdir, 0, args)[0]
 
     # Test
     assert junit_xml.testsuite_props['BUILD_URL'] == 'bar'
     del os.environ['BUILD_URL']
 
 
-def test_custom_config_value(testdir, single_decorated_test_function):
+def test_custom_config_value(testdir, single_decorated_test_function, tmpdir_factory):
     """Ensure that a value set in the config will end up as a property in xml."""
 
     # Expect
@@ -73,6 +78,8 @@ def test_custom_config_value(testdir, single_decorated_test_function):
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
+
+    config_path = tmpdir_factory.mktemp('data').join('config.json').strpath
     config = \
 """
 {
@@ -81,15 +88,19 @@ def test_custom_config_value(testdir, single_decorated_test_function):
     "BUILD_NUMBER": null
   }
 }
-""" # noqa
+"""  # noqa
 
-    junit_xml = run_and_parse_with_config(testdir, config)[0]
+    with open(config_path, 'w') as f:
+        f.write(config)
+
+    args = ["--pytest-zigzag-config", config_path]
+    junit_xml = run_and_parse(testdir, 0, args)[0]
 
     # Test
     assert junit_xml.testsuite_props['BUILD_URL'] == 'foo'
 
 
-def test_malformed_custom_config(testdir, single_decorated_test_function):
+def test_malformed_custom_config(testdir, single_decorated_test_function, tmpdir_factory):
     """Ensure failure given a malformed json doc."""
 
     # Expect
@@ -101,6 +112,11 @@ def test_malformed_custom_config(testdir, single_decorated_test_function):
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
+    testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
+                                                             mark_arg=test_id_exp,
+                                                             test_name=test_name_exp))
+
+    config_path = tmpdir_factory.mktemp('data').join('config.json').strpath
     config = \
 """
 {
@@ -109,15 +125,19 @@ def test_malformed_custom_config(testdir, single_decorated_test_function):
     "BUILD_NUMBER": null,
   }
 }
-""" # noqa
+"""  # noqa
 
-    result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
+    with open(config_path, 'w') as f:
+        f.write(config)
+
+    args = ["--pytest-zigzag-config", config_path]
+    result = run_and_parse(testdir, 1, args)
 
     # Test
     assert 'config file is not valid JSON' in result[1].stderr.lines[0]
 
 
-def test_custom_properties_in_custom_config(testdir, single_decorated_test_function):
+def test_custom_properties_in_custom_config(testdir, single_decorated_test_function, tmpdir_factory):
     """Test that a custom config with non-standard parameters can be used."""
 
     # Expect
@@ -129,6 +149,7 @@ def test_custom_properties_in_custom_config(testdir, single_decorated_test_funct
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
+    config_path = tmpdir_factory.mktemp('data').join('config.json').strpath
     config = \
 """
 {
@@ -139,17 +160,21 @@ def test_custom_properties_in_custom_config(testdir, single_decorated_test_funct
     "BUILD_NUMBER": null
   }
 }
-""" # noqa
+"""  # noqa
 
-    result = run_and_parse_with_config(testdir, config)
+    with open(config_path, 'w') as f:
+        f.write(config)
+
+    args = ["--pytest-zigzag-config", config_path]
+    result = run_and_parse(testdir, 0, args)
 
     # Test
     assert result[0].testsuite_props['FOO'] == 'foo'
     assert result[0].testsuite_props['BAR'] == 'bar'
 
 
-def test_custom_config_precidence(testdir, single_decorated_test_function):
-    """Test that a custom config with non-standard parameters can be used."""
+def test_custom_config_precidence(testdir, single_decorated_test_function, tmpdir_factory):
+    """Test that a config specified on the CLI is used over one specified in the ini config"""
 
     # Expect
     mark_type_exp = 'test_id'
@@ -160,28 +185,47 @@ def test_custom_config_precidence(testdir, single_decorated_test_function):
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
-    json_config = \
+    cli_config_path = tmpdir_factory.mktemp('data').join('config.json').strpath
+    ini_config_path = tmpdir_factory.mktemp('data').join('config.json').strpath
+    json_config_cli = \
 """
 {
   "pytest_zigzag_env_vars": {
-    "FOO": "foo",
-    "BAR": "bar",
-    "BUILD_URL": "foo",
-    "BUILD_NUMBER": null
+    "FOO": "foo"
   }
 }
 """ # noqa
 
-    ini_config = "[pytest]\n"
+    json_config_ini = \
+"""
+{
+  "pytest_zigzag_env_vars": {
+    "FOO": "bar"
+  }
+}
+"""  # noqa
 
-    result = run_and_parse_with_config(testdir, json_config, 0, None, ini_config)
+    with open(cli_config_path, 'w') as f:
+        f.write(json_config_cli)
+
+    with open(ini_config_path, 'w') as f:
+        f.write(json_config_ini)
+
+    ini_config = \
+"""
+[pytest]
+pytest-zigzag-config={}
+
+""".format(ini_config_path)  # noqa
+
+    args = ["--pytest-zigzag-config", cli_config_path]
+    result = run_and_parse_with_config(testdir, ini_config, 0, args)
 
     # Test
     assert result[0].testsuite_props['FOO'] == 'foo'
-    assert result[0].testsuite_props['BAR'] == 'bar'
 
 
-def test_required_parameters_are_required(testdir, single_decorated_test_function):
+def test_required_parameters_are_required(testdir, single_decorated_test_function, tmpdir_factory):
     """Test that a config missing required params will fail."""
 
     # Expect
@@ -193,6 +237,7 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
     testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
                                                              mark_arg=test_id_exp,
                                                              test_name=test_name_exp))
+    config_path = tmpdir_factory.mktemp('data').join('config.json').strpath
     config = \
 """
 {
@@ -200,9 +245,13 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
     "BUILD_NUMBER": null
   }
 }
-""" # noqa
+"""  # noqa
 
-    result = run_and_parse_with_config(testdir, config, exit_code_exp=1)
+    with open(config_path, 'w') as f:
+        f.write(config)
+
+    args = ["--pytest-zigzag-config", config_path]
+    result = run_and_parse(testdir, 1, args)
 
     # Test
     assert "does not comply with schema:" in result[1].stderr.lines[0]
