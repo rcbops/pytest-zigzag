@@ -22,7 +22,7 @@ entry_points = {
 
 setup(
     name='pytest-zigzag',
-    version='1.0.0',
+    version='1.0.0-dev0',
     author='rpc-automation',
     author_email='rpc-automation@rackspace.com',
     license='Apache Software License 2.0',
