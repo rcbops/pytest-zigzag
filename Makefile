@@ -84,10 +84,6 @@ coverage-html: ## check code coverage with an HTML report
 coverage-term: ## check code coverage with a simple terminal report
 	py.test --cov-report term-missing --cov=pytest_zigzag tests/
 
-release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
-
 dist: clean ## builds source and wheel package
 	python setup.py sdist
 	python setup.py bdist_wheel
@@ -113,23 +109,33 @@ build: ## build a wheel
 re-build: ## build a wheel
 	python setup.py bdist_wheel
 
-bump-major: ## bumps the version of by major
+bump-major: ## bumps the major version
 	bumpversion major
 
-bump-minor: ## bumps the version of by minor
+bump-minor: ## bumps the minor version
 	bumpversion minor
 
-bump-patch: ## bumps the version of by patch
+bump-patch: ## bumps the patch version
 	bumpversion patch
 
-release-major: clean-build build develop lint test re-clean-build bump-major re-build publish ## package and upload a major release
+bump-build: ## bumps the build version
+	bumpversion build
+
+bump-release: ## prepares the version number for production release
+	bumpversion --tag release
+
+release-major: clean-build build develop lint test re-clean-build bump-major bump-release re-build publish ## package and upload a major release
 	echo 'Successfully released!'
 	echo 'Please push the newly created tag and commit to GitHub.'
 
-release-minor: clean-build build develop lint test re-clean-build bump-minor re-build publish ## package and upload a minor release
+release-minor: clean-build build develop lint test re-clean-build bump-minor bump-release re-build publish ## package and upload a minor release
 	echo 'Successfully released!'
 	echo 'Please push the newly created tag and commit to GitHub.'
 
-release-patch: clean-build build develop lint test re-clean-build bump-patch re-build publish ## package and upload a patch release
+release-patch: clean-build build develop lint test re-clean-build bump-patch bump-release re-build publish ## package and upload a patch release
+	echo 'Successfully released!'
+	echo 'Please push the newly created tag and commit to GitHub.'
+
+release: clean-build build develop lint test re-clean-build bump-release re-build publish ## package and upload a patch release
 	echo 'Successfully released!'
 	echo 'Please push the newly created tag and commit to GitHub.'
