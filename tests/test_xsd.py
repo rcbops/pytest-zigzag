@@ -10,7 +10,7 @@ from lxml import etree
 # noinspection PyProtectedMember
 # noinspection PyPackageRequirements
 from zigzag.xml_parsing_facade import XmlParsingFacade
-from tests.conftest import run_and_parse_with_config
+from tests.conftest import run_and_parse
 
 
 # ======================================================================================================================
@@ -28,7 +28,9 @@ def test_happy_path_asc(testdir, properly_decorated_test_function, mocker, simpl
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse_with_config(testdir, simple_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", simple_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
+
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd()))
 
@@ -48,7 +50,8 @@ def test_happy_path_mk8s(testdir, properly_decorated_test_function, mocker, mk8s
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse_with_config(testdir, mk8s_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", mk8s_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
@@ -74,7 +77,8 @@ def test_multiple_jira_references(testdir, mocker, simple_test_config):
                     pass
     """)
 
-    xml_doc = run_and_parse_with_config(testdir, simple_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", simple_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd()))
 
@@ -100,7 +104,8 @@ def test_multiple_jira_references_mk8s(testdir, mocker, mk8s_test_config):
                     pass
     """)
 
-    xml_doc = run_and_parse_with_config(testdir, mk8s_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", mk8s_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
@@ -120,7 +125,8 @@ def test_missing_required_marks_asc(testdir, undecorated_test_function, mocker, 
     # Setup
     testdir.makepyfile(undecorated_test_function.format(test_name='test_typo_global'))
 
-    xml_doc = run_and_parse_with_config(testdir, asc_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", asc_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('asc')))
 
@@ -140,7 +146,8 @@ def test_missing_required_marks_mk8s(testdir, undecorated_test_function, mocker,
     # Setup
     testdir.makepyfile(undecorated_test_function.format(test_name='test_typo_global'))
 
-    xml_doc = run_and_parse_with_config(testdir, mk8s_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", mk8s_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
     # noinspection PyProtectedMember
     xmlschema = etree.XMLSchema(etree.parse(xmlpf._get_xsd('mk8s')))
 
@@ -161,7 +168,8 @@ def test_extra_testcase_property_asc(testdir, properly_decorated_test_function, 
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse_with_config(testdir, asc_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", asc_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties').append(etree.Element('property',
@@ -186,7 +194,8 @@ def test_extra_testcase_property_mk8s(testdir, properly_decorated_test_function,
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse_with_config(testdir, mk8s_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", mk8s_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties').append(etree.Element('property',
@@ -211,7 +220,8 @@ def test_typo_property_asc(testdir, properly_decorated_test_function, mocker, as
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse_with_config(testdir, asc_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", asc_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties/property').attrib['name'] = 'wrong_test_id'
@@ -235,7 +245,8 @@ def test_typo_property_mk8s(testdir, properly_decorated_test_function, mocker, s
                                                                test_id='123e4567-e89b-12d3-a456-426655440000',
                                                                jira_id='ASC-123'))
 
-    xml_doc = run_and_parse_with_config(testdir, simple_test_config)[0].xml_doc
+    args = ["--pytest-zigzag-config", simple_test_config]
+    xml_doc = run_and_parse(testdir, 0, args)[0].xml_doc
 
     # Add another property element for the testcase.
     xml_doc.find('./testcase/properties/property').attrib['name'] = 'wrong_test_id'

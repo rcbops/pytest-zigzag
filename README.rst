@@ -48,11 +48,11 @@ The location of the config file can be specified in two ways:
 1. In a pytest ini file::
 
     [pytest]
-    config_file=/path/to/config/file
+    pytest-zigzag-config=/path/to/config/file
 
 2. Explicitly on the command line::
 
-    pytest /path/to/test_test.py --config_file=/path/to/config/file
+    pytest /path/to/test_test.py --pytest-zigzag-config=/path/to/config/file
 
 Any property defined in the config file can be overriden by creating an environment variable of the same name. see this `config_property_overrides.md`_
 

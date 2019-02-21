@@ -59,10 +59,8 @@ def _capture_config_path(session):
 
         if junit_xml_config:
             # Determine the config option that we should use
-            if _get_option_of_highest_precedence(session.config, 'config_file'):
-                highest_precedence = _get_option_of_highest_precedence(session.config, 'config_file')
-            if _get_option_of_highest_precedence(session.config, 'config_file'):
-                highest_precedence = _get_option_of_highest_precedence(session.config, 'config_file')
+            if _get_option_of_highest_precedence(session.config, 'pytest-zigzag-config'):
+                highest_precedence = _get_option_of_highest_precedence(session.config, 'pytest-zigzag-config')
             if not highest_precedence:
                 highest_precedence = resource_stream('pytest_zigzag', 'data/configs/default-config.json')
 
@@ -251,12 +249,7 @@ def pytest_addoption(parser):
         parser (_pytest.config.Parser): A parser object
     """
 
-    config_option = "pytest-config"
-    config_option_help = "A config file path to be used for the parser."
-    parser.addini(config_option, config_option_help)
-    parser.addoption("--{}".format(config_option), help=config_option_help)
-
-    config_option = "config_file"
+    config_option = "pytest-zigzag-config"
     config_option_help = "The path to a json config file."
     parser.addini(config_option, config_option_help)
     parser.addoption("--{}".format(config_option), help=config_option_help)
