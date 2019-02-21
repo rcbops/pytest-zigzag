@@ -22,7 +22,6 @@ __version__ = '1.0.0'
 # ======================================================================================================================
 SESSION_MESSAGES = SessionMessages()
 TEST_STEPS_MARK = 'test_case_with_steps'
-ZZ_WARN_MESSAGE = "ZigZag will not attempt upload, '--zigzag' and '--qtest-project-id' must be specified together."
 
 
 # ======================================================================================================================
@@ -68,11 +67,8 @@ def _capture_config_path(session):
             config_dict = _load_config_file(highest_precedence)
 
             # Record environment variables in JUnitXML global properties
-            for key in config_dict:
-                for val in config_dict[key]:
-                    junit_xml_config.add_global_property(val,
-                                                         os.getenv(val,
-                                                                   config_dict[key][val]))
+            for key, val in list(config_dict['pytest_zigzag_env_vars'].items()):
+                junit_xml_config.add_global_property(key, os.getenv(key, val))
 
 
 def _get_option_of_highest_precedence(config, option_name):
@@ -152,14 +148,15 @@ def pytest_sessionfinish(session):
     SESSION_MESSAGES.drain()  # need to reset this on every pass through this hook
     if session.config.pluginmanager.hasplugin('junitxml'):
         zz_option = _get_option_of_highest_precedence(session.config, 'zigzag')
-        qtest_project_id = _get_option_of_highest_precedence(session.config, 'qtest-project-id')
-        if zz_option and qtest_project_id:
+        pytest_zigzag_config = _get_option_of_highest_precedence(session.config, 'pytest-zigzag-config')
+        if zz_option and pytest_zigzag_config:
             try:
                 junit_file_path = getattr(session.config, '_xml', None).logfile
+
                 # noinspection PyTypeChecker
                 # validate token
                 token = _validate_qtest_token(os.environ['QTEST_API_TOKEN'])
-                zz = ZigZag(junit_file_path, token, qtest_project_id, None)
+                zz = ZigZag(junit_file_path, pytest_zigzag_config, token)
                 job_id = zz.upload_test_results()
                 SESSION_MESSAGES.append("ZigZag upload was successful!")
                 SESSION_MESSAGES.append("Queue Job ID: {}".format(job_id))
@@ -258,28 +255,6 @@ def pytest_addoption(parser):
     zigzag_help = 'Enable automatic publishing of test results using ZigZag'
     parser.addini('zigzag', zigzag_help, type='bool', default=False)
     parser.addoption('--zigzag', help=zigzag_help, action="store_true", default=False)
-
-    project_help = 'The target project ID to use as a destination for test results published by ZigZag'
-    parser.addini('qtest-project-id', project_help, default=None)
-    parser.addoption('--qtest-project-id', help=project_help, default=None)
-
-
-def pytest_configure(config):
-    """Allows plugins and conftest files to perform initial configuration.
-
-    This hook is called for every plugin and initial conftest file after command line options have been parsed.
-
-    After that, the hook is called for other conftest files as they are imported.
-
-    Args:
-        config (_pytest.config.Config) a config object
-    """
-
-    zz = _get_option_of_highest_precedence(config, 'zigzag')
-    qtpid = _get_option_of_highest_precedence(config, 'qtest-project-id')
-
-    if any([zz, qtpid]) and not all([zz, qtpid]):
-        config.warn(101, ZZ_WARN_MESSAGE)
 
 
 def pytest_runtest_makereport(item, call):
