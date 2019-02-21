@@ -5,7 +5,7 @@
 # ======================================================================================================================
 from __future__ import absolute_import
 import os
-from tests.conftest import run_and_parse, run_and_parse_with_config
+from tests.conftest import run_and_parse, run_and_parse_with_ini_config
 
 
 # ======================================================================================================================
@@ -219,7 +219,7 @@ pytest-zigzag-config={}
 """.format(ini_config_path)  # noqa
 
     args = ["--pytest-zigzag-config", cli_config_path]
-    result = run_and_parse_with_config(testdir, ini_config, 0, args)
+    result = run_and_parse_with_ini_config(testdir, ini_config, 0, args)
 
     # Test
     assert result[0].testsuite_props['FOO'] == 'foo'

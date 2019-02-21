@@ -123,28 +123,10 @@ def run_and_parse(testdir, exit_code_exp=0, runpytest_args=None):
 
     junit_xml_doc = JunitXml(str(result_path))
 
-    return (junit_xml_doc, result)
+    return junit_xml_doc, result
 
 
-def build_property_list(config_dict):
-    """ Build a list of properties and values that will end up in junit xml. This should only
-        be used for testing purposes to set expectations.
-
-    Args:
-        config_dict: a python object representation of pytest_zigzag config json
-
-    Returns:
-        props: a flattened dictionary of properties and values
-    """
-    props = {}
-    for root_key in config_dict:
-        if not config_dict[root_key] is None:
-            for key in config_dict[root_key]:
-                props[key] = config_dict[root_key][key]
-    return props
-
-
-def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=None):
+def run_and_parse_with_ini_config(testdir, config, exit_code_exp=0, runpytest_args=None):
     """Execute a pytest run against a directory containing pytest Python files.
     Args:
         testdir (_pytest.pytester.TestDir): A pytest fixture for testing pytest plug-ins.
@@ -169,7 +151,25 @@ def run_and_parse_with_config(testdir, config, exit_code_exp=0, runpytest_args=N
 
     junit_xml_doc = JunitXml(str(result_path))
 
-    return (junit_xml_doc, result)
+    return junit_xml_doc, result
+
+
+def build_property_list(config_dict):
+    """ Build a list of properties and values that will end up in junit xml. This should only
+        be used for testing purposes to set expectations.
+
+    Args:
+        config_dict: a python object representation of pytest_zigzag config json
+
+    Returns:
+        props: a flattened dictionary of properties and values
+    """
+    props = {}
+    for root_key in config_dict:
+        if not config_dict[root_key] is None:
+            for key in config_dict[root_key]:
+                props[key] = config_dict[root_key][key]
+    return props
 
 
 def merge_dicts(*args):
