@@ -12,7 +12,7 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 python_requirements = '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*'
-requirements = ['pytest~=3.6', 'setuptools', 'sh', 'rpc-zigzag~=1.0.0dev0', 'jsonschema~=2.6']
+requirements = ['pytest~=3.6', 'setuptools', 'sh', 'rpc-zigzag~=1.0.0', 'jsonschema~=2.6']
 packages = ['pytest_zigzag']
 entry_points = {
     'pytest11': [
