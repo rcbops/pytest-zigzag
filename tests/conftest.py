@@ -514,6 +514,11 @@ def simple_test_config(tmpdir_factory):
     "PATH_TO_TEST_EXEC_DIR": null,
     "MOLECULE_GIT_COMMIT": null,
     "GIT_COMMIT": null
+  },
+  "zigzag": {
+    "test_cycle": "{{ RPC_PRODUCT_RELEASE }}",
+    "project_id": "12345",
+    "module_hierarchy": ["pike"]
   }
 }
 """  # noqa
