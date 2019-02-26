@@ -106,7 +106,7 @@ def _load_default_config_file():
     Returns:
        config_dict (dict): A dictionary of property names and associated values.
     """
-    return _load_config(resource_stream('pytest_zigzag', 'data/configs/default-config.json'))
+    return _load_config(resource_stream('pytest_zigzag', 'data/configs/default-config.json').read().decode())
 
 
 def _load_config_file(config_file):
@@ -120,7 +120,7 @@ def _load_config_file(config_file):
     """
     try:
         with open(config_file, 'r') as f:
-            return _load_config(f)
+            return _load_config(f.read())
     except (OSError, IOError):
         pytest.exit("Failed to load '{}' config file!".format(config_file), returncode=1)
 
@@ -129,7 +129,7 @@ def _load_config(config_file):
     """Validate and load the contents of a 'pytest-zigzag' config file into memory.
 
     Args:
-        config_file (file): the config file to read
+        config_file (str): the config file
     """
 
     config_dict = {}
@@ -137,15 +137,15 @@ def _load_config(config_file):
                                    'data/schema/pytest-zigzag-config.schema.json').read().decode())
 
     try:
-        config_dict = loads(config_file.read())
+        config_dict = loads(config_file)
     except ValueError as e:
-        pytest.exit("The '{}' config file is not valid JSON: {}".format(config_file, str(e)), returncode=1)
+        pytest.exit("The config file is not valid JSON: {}".format(str(e)), returncode=1)
 
     # Validate config
     try:
         validate(config_dict, schema)
     except ValidationError as e:
-        pytest.exit("Config file '{}' does not comply with schema: {}".format(config_file, str(e)), returncode=1)
+        pytest.exit("Config file does not comply with schema: {}".format(str(e)), returncode=1)
 
     return config_dict
 
