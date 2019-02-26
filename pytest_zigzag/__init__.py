@@ -60,11 +60,9 @@ def _capture_config_path(session):
             # Determine the config option that we should use
             if _get_option_of_highest_precedence(session.config, 'pytest-zigzag-config'):
                 highest_precedence = _get_option_of_highest_precedence(session.config, 'pytest-zigzag-config')
+                config_dict = _load_config_file(highest_precedence)
             if not highest_precedence:
-                highest_precedence = resource_stream('pytest_zigzag', 'data/configs/default-config.json')
-
-            # Load config
-            config_dict = _load_config_file(highest_precedence)
+                config_dict = _load_default_config_file()
 
             # Record environment variables in JUnitXML global properties
             for key, val in list(config_dict['pytest_zigzag_env_vars'].items()):
@@ -102,8 +100,17 @@ def _validate_qtest_token(token):
     return token if re.match("^[a-zA-Z0-9]+$", token) else ""
 
 
+def _load_default_config_file():
+    """Get the default config file
+
+    Returns:
+       config_dict (dict): A dictionary of property names and associated values.
+    """
+    return _load_config(resource_stream('pytest_zigzag', 'data/configs/default-config.json'))
+
+
 def _load_config_file(config_file):
-    """Validate and load the contents of a 'pytest-zigzag' config file into memory.
+    """load a config file specified by the user
 
     Args:
         config_file (str): The path to a pytest_zigzag config file.
@@ -111,16 +118,26 @@ def _load_config_file(config_file):
     Returns:
         config_dict (dict): A dictionary of property names and associated values.
     """
+    try:
+        with open(config_file, 'r') as f:
+            return _load_config(f)
+    except (OSError, IOError):
+        pytest.exit("Failed to load '{}' config file!".format(config_file), returncode=1)
+
+
+def _load_config(config_file):
+    """Validate and load the contents of a 'pytest-zigzag' config file into memory.
+
+    Args:
+        config_file (file): the config file to read
+    """
 
     config_dict = {}
     schema = loads(resource_stream('pytest_zigzag',
                                    'data/schema/pytest-zigzag-config.schema.json').read().decode())
 
     try:
-        with open(config_file, 'r') as f:
-            config_dict = loads(f.read())
-    except (OSError, IOError):
-        pytest.exit("Failed to load '{}' config file!".format(config_file), returncode=1)
+        config_dict = loads(config_file.read())
     except ValueError as e:
         pytest.exit("The '{}' config file is not valid JSON: {}".format(config_file, str(e)), returncode=1)
 

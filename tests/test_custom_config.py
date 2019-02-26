@@ -256,3 +256,22 @@ def test_required_parameters_are_required(testdir, single_decorated_test_functio
     # Test
     assert "does not comply with schema:" in result[1].stderr.lines[0]
     assert "'pytest_zigzag_env_vars' is a required property" in result[1].stderr.lines[0]
+
+
+def test_default_config(testdir, single_decorated_test_function):
+    """Test that a default config is present if none is configured"""
+
+    # Expect
+    mark_type_exp = 'test_id'
+    test_id_exp = '123e4567-e89b-12d3-a456-426655440000'
+    test_name_exp = 'test_uuid'
+
+    # Setup
+    testdir.makepyfile(single_decorated_test_function.format(mark_type=mark_type_exp,
+                                                             mark_arg=test_id_exp,
+                                                             test_name=test_name_exp))
+    args = []  # no config is provided
+    junit_xml = run_and_parse(testdir, 0, args)[0]
+
+    # Test
+    assert 'BUILD_NUMBER' in junit_xml.testsuite_props  # if there was no config we would not have a BUILD_NUMBER
